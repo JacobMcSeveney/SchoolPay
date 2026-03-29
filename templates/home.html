@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <nav>
+        <ul>
+            <button class="active-button" type="button" onclick="window.location.href='/'"><i class="fa-regular fa-house"></i> Home</button>
+            <button type="button" onclick="window.location.href='/about/'"><i class="fa-solid fa-circle-info"></i> About</button>
+            <button type="button" onclick="window.location.href='/contact/'"><i class="fa-regular fa-envelope"></i> Contact</button>
+            <button type="button" onclick="window.location.href='/login/'"><i class="fa-regular fa-user"></i> Login</button>
+            <button type="button" onclick="window.location.href='/register/'"><i class="fa-regular fa-user"></i> Register</button>
+        </ul>
+    </nav>
+
+    <section class="container">
+        <img src="/static/logo.png" alt="Name" class="logo">
+        <h1>Welcome to Name!</h1>
+    </section>
+</body>
+</html>

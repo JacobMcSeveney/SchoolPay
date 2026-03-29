@@ -1,0 +1,26 @@
+{
+    "1": {
+        "username": "admin",
+        "password": "pbkdf2:sha256$4yhcxS1FNjXoGj2G$96a818a764a8ccf29444c60ea918ba7f705c27b2b15c087bb5f725507f17aa42",
+        "email": null,
+        "address": null,
+        "city": null,
+        "zip": null,
+        "country": null,
+        "dob": null,
+        "gender": null,
+        "user_type": null
+    },
+    "Student Acc 1": {
+        "username": "Student Acc 1",
+        "password": "pbkdf2:sha256:1000000$YQFjgRLLyocw5A7C$eeb9f4077779d43f23ad3599c0a65e62542399f608e2c21b547960094f8897ff",
+        "email": "mcseveneyj@stu.otc.school.nz",
+        "address": "14 Bay Street",
+        "city": "Tauranga",
+        "zip": "3110",
+        "country": "New Zealand",
+        "dob": "2009-01-28",
+        "gender": "male",
+        "user_type": "student"
+    }
+}
