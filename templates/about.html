@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body class="about-us-page">
+    <nav class="top-nav">
+        <ul>
+            <button type="button" onclick="window.location.href='/'"><i class="fa-regular fa-house"></i> Home</button>
+            <button class="active-button" type="button" onclick="window.location.href='/about'"><i class="fa-solid fa-circle-info"></i> About</button>
+            <button type="button" onclick="window.location.href='/contact'"><i class="fa-regular fa-envelope"></i> Contact</button>
+            <button type="button" class="nav-register" onclick="window.location.href='/register'"><i class="fa-regular fa-user"></i> Register</button>
+            <button type="button" class="nav-login" onclick="window.location.href='/login'"><i class="fa-regular fa-user"></i> Login</button>
+        </ul>
+    </nav>
+    <main class="about-us-main">
+        <h1>About Us</h1>
+        <div class="text-container">
+            <div>
+                <h2>Secure Payments</h2>
+                <p>
+                    Your financial security is paramount. Our platform employs advanced encryption and robust security
+                    protocols, ensuring that every transaction and piece of personal data is protected against unauthorized access.
+                    Parents can make payments with complete peace of mind, knowing their sensitive information is safe.
+                    For schools, this means reliable and trustworthy management of all financial records, reducing risk
+                    and enhancing accountability across the board.
+                </p>
+
+                <div class="image-placeholder small-placeholder">
+                    <i class="fa-regular fa-image"></i>
+                    <p>Secure payment icon/graphic</p>
+                </div>
+            </div>
+            <div>
+                <h2>Connected Accounts</h2>
+                <p>
+                    Our platform creates a unified and efficient ecosystem by seamlessly linking student and parent accounts.
+                    This intelligent connectivity allows parents to effortlessly view and manage payments for all their children
+                    from a single, intuitive dashboard. They can track historical transactions, monitor current account balances,
+                    and make informed financial decisions with ease. For students, this connection fosters early financial
+                    awareness and responsibility by providing them with controlled access to their own payment records and
+                    school-related financial activities.
+                </p>
+
+                <div class="image-placeholder small-placeholder">
+                    <i class="fa-regular fa-image"></i>
+                    <p>Connected accounts graphic</p>
+                </div>
+            </div>
+            <div>
+                <h2>Notifications & Announcements</h2>
+                <p>
+                    Never miss a critical update again. Our intelligent notification system delivers timely alerts
+                    for upcoming payment deadlines, instantly confirms successful transactions, and broadcasts important
+                    school announcements directly to your dashboard and preferred communication channels. This proactive,
+                    clear, and consistent communication strategy ensures that parents and students are always well-informed,
+                    significantly reducing stress, preventing missed payments, and improving overall engagement with
+                    school activities and financial responsibilities.
+                </p>
+
+                <div class="image-placeholder small-placeholder">
+                    <i class="fa-regular fa-image"></i>
+                    <p>Notifications graphic</p>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

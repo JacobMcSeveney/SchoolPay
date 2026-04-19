@@ -148,3 +148,50 @@ table td {
     border: 1px solid #ddd;
     padding: 0.75rem;
 }
+
+.about-us-main h1 {
+    padding: 2rem;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.about-us-main h2 {
+    padding: 2rem;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.about-us-main p {
+    text-align: center;
+}
+
+.text-container {
+    display: grid;
+    grid-gap: 1rem;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr;
+}
+
+.text-container > div {
+    padding: 10px;
+    background-color: #ddd;
+    text-align: center;
+    padding: 2rem;
+    border-radius: 8px;
+    margin: 2rem;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-placeholder small-placeholder {
+    width: 50%;
+    margin: 0 auto;
+    height: 50%;
+    background-color: #f4f4f4;
+    padding: 2rem;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+}

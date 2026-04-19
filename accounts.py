@@ -135,7 +135,7 @@ def parent_register():
 
         hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
 
-        user_id = str(len(users) + 1)
+        user_id = username
         new_user = Users(username=username, password=hashed_password, email=email, address=address, city=city, zip=zip, country=country, dob=dob, gender=gender, user_type=user_type, id=user_id)
         users[user_id] = new_user
         save_users(users)
@@ -173,6 +173,29 @@ def dashboard():
 def logout():
     logout_user()
     return redirect(url_for("home"))
+
+@app.route("/student_dashboard")
+@login_required
+def student_dashboard():
+    return render_template("student_dashboard.html", username=current_user.username)
+
+@app.route("/parent_dashboard")
+@login_required
+def parent_dashboard():
+    return render_template("parent_dashboard.html", username=current_user.username)
+
+@app.route("/admin_dashboard")
+@login_required
+def admin_dashboard():
+    return render_template("admin_dashboard.html", username=current_user.username)
+
+@app.route("/about")
+def about():
+    return render_template("about.html")
+
+@app.route("/contact")
+def contact():
+    return render_template("contact.html")
 
 if __name__ == "__main__":
    app.run(debug=True)
