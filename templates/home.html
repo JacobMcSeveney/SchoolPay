@@ -10,17 +10,20 @@
 <body>
     <nav>
         <ul>
-            <button class="active-button" type="button" onclick="window.location.href='/'"><i class="fa-regular fa-house"></i> Home</button>
-            <button type="button" onclick="window.location.href='/about'"><i class="fa-solid fa-circle-info"></i> About</button>
-            <button type="button" onclick="window.location.href='/contact'"><i class="fa-regular fa-envelope"></i> Contact</button>
-            <button type="button" onclick="window.location.href='/login'"><i class="fa-regular fa-user"></i> Login</button>
-            <button type="button" onclick="window.location.href='/register'"><i class="fa-regular fa-user"></i> Register</button>
+            <li><a class="active" href="/">Home</a></li>
+            <li><a href="/about">About</a></li>
+            <li><a href="/contact">Contact</a></li>
+            <li><a href="/login">Login</a></li>
+            <li><a href="/register">Register</a></li>
         </ul>
     </nav>
-
-    <section class="container">
-        <img src="/static/logo.png" alt="Name" class="logo">
-        <h1>Welcome to Name!</h1>
-    </section>
+    <div class="container">
+        <h1>Welcome to StudentPay!</h1>
+        <p>Your one-stop solution for managing school payments and accounts.</p>
+        <a href="/register">Get Started</a>
+    </div>
+    <footer>
+        <p style="text-align: center; margin-top: 20px;">&copy; 2026 StudentPay. All rights reserved. <a href="/about">Learn More</a> <a href="/contact">Contact Us</a></p>
+    </footer>
 </body>
 </html>
