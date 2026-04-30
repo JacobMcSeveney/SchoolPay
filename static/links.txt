@@ -1,0 +1,3 @@
+cover_image: https://www.sanctamaria.school.nz/envira/school/default-2/
+secure_payment: https://infiniticube.com/wp-content/uploads/2024/03/10-Tips-for-a-Seamless-Payment-Gateway-Creation.webp
+contact: https://static.vecteezy.com/system/resources/previews/023/802/889/non_2x/communicate-to-solve-problem-discussion-or-meeting-to-get-new-idea-collaboration-or-cooperate-to-success-connect-idea-for-solution-concept-businessman-connect-plug-between-conversation-dialog-vector.jpg

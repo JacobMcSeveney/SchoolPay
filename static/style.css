@@ -4,6 +4,7 @@ body {
     padding: 0;
     background-color: #f9f9f9;
     color: #333;
+    height: 100%;
 }
 
 .home-button {
@@ -30,6 +31,15 @@ body {
     border-radius: 4px;
     padding: 0.75rem 1.5rem;
     cursor: pointer;
+}
+
+a {
+    text-decoration: none;
+    color: #333;
+}
+
+a:hover {
+    text-decoration: underline;
 }
 
 nav {
@@ -322,4 +332,92 @@ input[type=submit]:hover {
 
 .back-link:focus {
     outline: none;
+}
+
+.hero-image {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("cover_image.jpg");
+    height: 50vh;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    position: relative;
+  }
+  
+  .hero-text {
+    text-align: left;
+    position: absolute;
+    top: 50%;
+    left: 20%;
+    transform: translate(-50%, -50%);
+    color: #000000;
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 8px;
+    cursor: default;
+    }
+
+    .hero-text h1 {
+        color: #1E6BD6;
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+.content-section {
+    padding: 4rem 0;
+    background-color: #fff;
+    border-bottom: 1px solid #eee;
+}
+
+.content-section:nth-of-type(odd) { /* Apply a different background to odd sections for visual alternation */
+    background-color: #f9f9f9;
+}
+
+.content-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+    padding: 0 2rem;
+}
+
+.image-side {
+    flex: 1;
+    min-width: 280px;
+}
+
+.image-side img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.text-side {
+    flex: 1.5;
+    padding: 1rem;
+}
+
+.text-side h2 {
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+    color: #1E6BD6;
+}
+
+.text-side p {
+    font-size: 1.15rem;
+    line-height: 1.7;
+    margin-bottom: 2rem;
+    color: #555;
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.content-section.reverse .content-wrapper {
+    flex-direction: row-reverse;
 }

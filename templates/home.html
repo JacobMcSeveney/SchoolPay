@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>SchoolPay</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
@@ -19,11 +19,51 @@
         <li><a href="/register">Register</a></li>
     </div>
     </nav>
-    <div class="container">
-        <h1>Welcome to SchoolPay!</h1>
-        <p>Your one-stop solution for managing school payments and accounts.</p>
-        <a href="/register">Get Started</a>
+    <div class="hero-image">
+        <div class="hero-text">
+                <h1>Welcome to SchoolPay!</h1>
+                <p>Your one-stop solution for managing school payments and accounts.</p>
+            </div>
+        </div>
     </div>
+    <section class="content-section">
+        <div class="content-wrapper">
+            <div class="image-side">
+                <img src="{{ url_for('static', filename='secure_payment.jpg') }}" alt="Illustrates various features">
+            </div>
+            <div class="text-side">
+                <h2>Seamless Payment Management</h2>
+                <p>Simplify school payments with our intuitive platform. Track expenses, view payment history, and make secure transactions all in one place.</p>
+                <div class="button-group">
+                    <a href="/about" class="button">Learn More About Us</a>
+                    <a href="/contact" class="button">Contact Support</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content-section reverse">
+        <div class="content-wrapper">
+            <div class="image-side">
+                <img src="{{ url_for('static', filename='contact.jpg') }}" alt="Building school community">
+            </div>
+            <div class="text-side">
+                <h2>Connect & Collaborate</h2>
+                <p>SchoolPay helps foster a stronger school community by providing clear communication channels and easy access to important announcements and events.</p>
+                <div class="button-group">
+                    <a href="/about" class="button">Discover Our Approach</a>
+                    <a href="/contact" class="button">Get in Touch</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content-section">
+        <div class="container">
+            <h2>Ready to Get Started?</h2>
+            <a href="/register" class="button">Register Your Account Today!</a>
+        </div>
+    </section>
     <footer>
         <p style="text-align: center; margin-top: 20px;">&copy; 2026 StudentPay. All rights reserved. <a href="/about">Learn More</a> <a href="/contact">Contact Us</a></p>
     </footer>
