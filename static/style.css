@@ -243,6 +243,12 @@ nav ul img {
     justify-content: center;
 }
 
+.text-container img {
+    width: 50%;
+    margin: 0 auto;
+    border-radius: 8px;
+}
+
 .image-placeholder small-placeholder {
     width: 50%;
     margin: 0 auto;
