@@ -3,29 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up</title>
+    <title>SchoolPay - About Us</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
-<body>
+<body class="contact-page">
     <nav>
         <ul>
             <li><a href="/">Home</a></li>
+            <li><a href="/about">About</a></li>
+            <li><a class="active" href="/contact">Contact</a></li>
         </ul>
+    <div class="account">
+        <li><a href="/login">Login</a></li>
+        <li><a href="/register">Register</a></li>
+    </div>
     </nav>
-
-    <div class="container">
-        <h1>Register</h1>
-        <p>Select the type of account you would like to create.</p>
-    </div>
-    <div class="container">
-        <img src="static/student.png" alt="Student">
-        <img src="static/parent.png" alt="Parent">
-    </div>
-    <div class="container">
-        <a class="big-button" href="/student_register">Student</a>
-        <a class="big-button" href="/parent_register">Parent</a>
-        <br><br><a class="button" href="/login">Already have an account? Login</a>
-    </div>
-</body>
-</html>

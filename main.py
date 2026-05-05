@@ -103,7 +103,7 @@ def student_register():
         gender = request.form.get("gender")
         user_type = "student"
         if any(user.username == username for user in users.values()):
-            return render_template("student_register.html", error="Username already taken!")
+            return render_template("/register/student_register.html", error="Username already taken!")
 
         hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
 
@@ -114,7 +114,7 @@ def student_register():
 
         return redirect(url_for("login"))
     
-    return render_template("student_register.html")
+    return render_template("/register/student_register.html")
 
 # Parent register route
 @app.route('/parent_register', methods=["GET", "POST"])
@@ -131,7 +131,7 @@ def parent_register():
         gender = request.form.get("gender")
         user_type = "parent"
         if any(user.username == username for user in users.values()):
-            return render_template("parent_register.html", error="Username already taken!")
+            return render_template("register/parent_register.html", error="Username already taken!")
 
         hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
 
@@ -142,7 +142,7 @@ def parent_register():
 
         return redirect(url_for("login"))
     
-    return render_template("parent_register.html")
+    return render_template("register/parent_register.html")
 
 # Login route
 @app.route("/login", methods=["GET", "POST"])
@@ -155,17 +155,17 @@ def login():
 
         if user and check_password_hash(user.password, password):
             login_user(user) #type: ignore
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("login_screen"))
         else:
             return render_template("login.html", error="Invalid username or password")
 
     return render_template("login.html")
 
-# Protected dashboard route
-@app.route("/dashboard")
+# Logged in route
+@app.route("/login_screen")
 @login_required
-def dashboard():
-    return render_template("dashboard.html", username=current_user.username)
+def login_screen():
+      return render_template("login_screen.html", username=current_user.username, user_type=current_user.user_type)
 
 # Logout route
 @app.route("/logout")
@@ -177,17 +177,17 @@ def logout():
 @app.route("/student_dashboard")
 @login_required
 def student_dashboard():
-    return render_template("student_dashboard.html", username=current_user.username)
+    return render_template("dashboard/student_dashboard.html", username=current_user.username)
 
 @app.route("/parent_dashboard")
 @login_required
 def parent_dashboard():
-    return render_template("parent_dashboard.html", username=current_user.username)
+    return render_template("dashboard/parent_dashboard.html", username=current_user.username)
 
 @app.route("/admin_dashboard")
 @login_required
 def admin_dashboard():
-    return render_template("admin_dashboard.html", username=current_user.username)
+    return render_template("dashboard/admin_dashboard.html", username=current_user.username)
 
 @app.route("/about")
 def about():

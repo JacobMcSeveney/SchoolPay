@@ -3,20 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>Parent Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <nav>
+        <ul>
+            <li><a href="/">Home</a></li>
+        </ul>
         <div class="account">
             <ul>
                 <li><a href="/logout">Logout</a></li>
             </ul>
         </div>
     </nav>
-
-    <div class="dashboard">
-        <h1>You are logged in as {{ username }}!</h1>
+    <div class="dashboard-content">
+        <h1>Welcome to the Parent Dashboard, {{ username }}!</h1>
+        <p>From here you can manage your child's payments, view their academic progress, and update your profile.</p>
     </div>
 </body>
 </html>
