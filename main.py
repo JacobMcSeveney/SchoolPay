@@ -5,7 +5,6 @@ import json
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = "supersecretkey"
 
 # Initialize database and login manager
@@ -166,7 +165,11 @@ def login():
 @login_required
 def login_screen():
       return render_template("login_screen.html", username=current_user.username, user_type=current_user.user_type)
-
+# Profile route
+@app.route("/profile")
+@login_required
+def profile():
+    return render_template("profile.html", username=current_user.username, user_type=current_user.user_type)
 # Logout route
 @app.route("/logout")
 @login_required
@@ -174,25 +177,29 @@ def logout():
     logout_user()
     return redirect(url_for("home"))
 
+#Student dashboard route
 @app.route("/student_dashboard")
 @login_required
 def student_dashboard():
     return render_template("dashboard/student_dashboard.html", username=current_user.username)
-
+#Parent dashboard route
 @app.route("/parent_dashboard")
 @login_required
 def parent_dashboard():
     return render_template("dashboard/parent_dashboard.html", username=current_user.username)
 
+#Admin dashboard route
 @app.route("/admin_dashboard")
 @login_required
 def admin_dashboard():
     return render_template("dashboard/admin_dashboard.html", username=current_user.username)
 
+#About page route
 @app.route("/about")
 def about():
     return render_template("about.html")
 
+#Contact page route
 @app.route("/contact")
 def contact():
     return render_template("contact.html")
