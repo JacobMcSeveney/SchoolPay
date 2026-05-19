@@ -153,7 +153,7 @@ def login():
         user = next((user for user in users.values() if user.username == username), None)
 
         if user and check_password_hash(user.password, password):
-            login_user(user) #type: ignore
+            login_user(user)
             return redirect(url_for("login_screen"))
         else:
             return render_template("login.html", error="Invalid username or password")
@@ -186,7 +186,8 @@ def student_dashboard():
 @app.route("/parent_dashboard")
 @login_required
 def parent_dashboard():
-    return render_template("dashboard/parent_dashboard.html", username=current_user.username)
+    payment_fees = [] # figure out what to do with this later
+    return render_template("dashboard/parent_dashboard.html", username=current_user.username, payment_fees=payment_fees)
 
 #Admin dashboard route
 @app.route("/admin_dashboard")

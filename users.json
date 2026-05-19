@@ -1,7 +1,7 @@
 {
     "admin": {
         "username": "admin",
-        "password": "pbkdf2:sha256$4yhcxS1FNjXoGj2G$96a818a764a8ccf29444c60ea918ba7f705c27b2b15c087bb5f725507f17aa42",
+        "password": "password",
         "email": null,
         "address": null,
         "city": null,

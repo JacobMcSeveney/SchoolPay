@@ -14,8 +14,18 @@
             <li><a href="/about">About</a></li>
             <li><a class="active" href="/contact">Contact</a></li>
         </ul>
-    <div class="account">
-        <li><a href="/login">Login</a></li>
-        <li><a href="/register">Register</a></li>
-    </div>
+        <div class="account">
+            <ul>
+                {% if current_user.is_authenticated %}
+                    {% if current_user.user_type == 'admin' %}
+                        <li><a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a></li>
+                    {% endif %}
+                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                    <li><a href="{{ url_for('profile') }}">My Profile | {{ current_user.username }}</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('login') }}">Login</a></li>
+                    <li><a href="{{ url_for('register') }}">Register</a></li>
+                {% endif %}
+            </ul>
+        </div>
     </nav>
