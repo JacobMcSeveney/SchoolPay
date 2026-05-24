@@ -143,6 +143,31 @@ def parent_register():
     
     return render_template("register/parent_register.html")
 
+# Admin register route
+@app.route('/admin_register', methods=["GET", "POST"])
+def admin_register():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        email = request.form.get("email")
+        address = request.form.get("address")
+        city = request.form.get("city")
+        zip = request.form.get("zip")
+        country = request.form.get("country")
+        dob = request.form.get("dob")
+        gender = request.form.get("gender")
+        user_type = "admin"
+        hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
+        user_id = username
+        new_user = Users(username=username, password=hashed_password, email=email, address=address, city=city, zip=zip, country=country, dob=dob, gender=gender, user_type=user_type, id=user_id)
+        users[user_id] = new_user
+        save_users(users)
+
+        return redirect(url_for("login"))
+    
+    return render_template("register/admin_register.html")
+
+
 # Login route
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -182,12 +207,26 @@ def logout():
 @login_required
 def student_dashboard():
     return render_template("dashboard/student_dashboard.html", username=current_user.username)
+
 #Parent dashboard route
 @app.route("/parent_dashboard")
 @login_required
 def parent_dashboard():
-    payment_fees = [] # figure out what to do with this later
-    return render_template("dashboard/parent_dashboard.html", username=current_user.username, payment_fees=payment_fees)
+    payment_fees = [
+        {"id": 1, "name": "Tuition Fee", "amount": 500.00},
+        {"id": 2, "name": "Lunch Program", "amount": 75.50},
+        {"id": 3, "name": "Field Trip", "amount": 25.00},
+        {"id": 4, "name": "Textbooks", "amount": 120.00},
+    ] # figure out what to do with this later
+    payment_history = [
+        {"id": 1, "date": "2023-01-15", "description": "Tuition Fee - January", "amount": 500.00, "status": "Paid"},
+        {"id": 2, "date": "2023-02-10", "description": "Lunch Program - February", "amount": 75.50, "status": "Paid"},
+        {"id": 3, "date": "2023-03-01", "description": "Field Trip - Museum", "amount": 25.00, "status": "Paid"},
+        {"id": 4, "date": "2023-04-20", "description": "Textbooks - Spring Semester", "amount": 120.00, "status": "Paid"},
+        {"id": 5, "date": "2023-05-05", "description": "Graduation Fee", "amount": 150.00, "status": "Paid"},
+        {"id": 6, "date": "2023-06-01", "description": "Sports Club Membership", "amount": 80.00, "status": "Paid"},
+    ] # Placeholder cards to test before adding admin payments
+    return render_template("dashboard/parent_dashboard.html", username=current_user.username, payment_fees=payment_fees, payment_history=payment_history)
 
 #Admin dashboard route
 @app.route("/admin_dashboard")

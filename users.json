@@ -1,15 +1,15 @@
 {
     "admin": {
         "username": "admin",
-        "password": "password",
-        "email": null,
-        "address": null,
-        "city": null,
-        "zip": null,
-        "country": null,
-        "dob": null,
-        "gender": null,
-        "user_type": null
+        "password": "pbkdf2:sha256:1000000$isA5sMk9fgOTlMEK$3a2d5dfa9c1235b5dc4b45a759b06293003da9676af11130231345748fc9142b",
+        "email": "schoolpayadmin@gmail.com",
+        "address": "14 Bay Street",
+        "city": "Tauranga",
+        "zip": "3110",
+        "country": "New Zealand",
+        "dob": "2000-01-01",
+        "gender": "non-binary",
+        "user_type": "admin"
     },
     "Student Acc 1": {
         "username": "Student Acc 1",
