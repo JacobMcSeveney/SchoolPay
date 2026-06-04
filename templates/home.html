@@ -15,11 +15,6 @@
         </ul>
         <div class="account">
             {% if current_user.is_authenticated %}
-                {% if current_user.user_type == 'admin' %}
-                    <ul>
-                        <li><a href="/admin_dashboard">Admin Dashboard</a></li>
-                    </ul>
-                        {% endif %}
                     <ul>
                         <li><a href="/logout">Logout</a></li>
                         <li><a href="/profile">My Profile | {{ current_user.username }}</a></li>

@@ -7,31 +7,9 @@ body {
     height: 100%;
 }
 
-.home-button {
-    background-color: #1E6BD6;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    padding: 0.75rem 1.5rem;
-    cursor: pointer;
-}
-
-.home-button:hover {
-    background-color: #3146d0;
-}
-
-.home-button:focus {
-    outline: none;
-}
-
-.active-button {
-    background-color: #3146d0;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    padding: 0.75rem 1.5rem;
-    cursor: pointer;
-}
+p::first-letter {
+    text-transform: uppercase;
+  }
 
 a {
     text-decoration: none;
@@ -266,17 +244,6 @@ nav ul img {
     width: 50%;
     margin: 0 auto;
     border-radius: 8px;
-}
-
-.image-placeholder small-placeholder {
-    width: 50%;
-    margin: 0 auto;
-    height: 50%;
-    background-color: #f4f4f4;
-    padding: 2rem;
-    text-align: center;
-    align-items: center;
-    justify-content: center;
 }
   
 input[type=text], select {
@@ -703,4 +670,69 @@ input[type=submit]:hover {
 .payment-status-paid {
     color: #5cb85c;
     font-weight: bold;
+}
+
+.user-list {
+    width: 100%;
+    text-align: left;
+}
+
+.user-list-grid ul {
+    list-style: none;
+    padding: 0;
+    margin: 10px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+    list-style: none;
+    max-width: 960px;
+}
+
+.user-item {
+    margin: 0;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: left;
+}
+
+.user-item a {
+    background-color: #3146d0;
+    text-decoration: none;
+    width: 93%;
+    align-items: left;
+    padding: 10px;
+}
+
+.user-item a:hover {
+    background-color: #1e6bd6;
+}
+
+.delete-button {
+    background-color: #d9534f;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    position: relative;
+    margin: 0 auto;
+    margin-top: 30px;
+    margin-bottom: 30px;
+    align-items: center;
+    justify-content: center;
+}
+
+.error {
+    padding: 0.75rem 1.5rem;
+    color: red;
+    border-radius: 4px;
+    border: none;
+    border-radius: 4px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+    justify-content: center;
 }

@@ -1,7 +1,8 @@
 from flask import Flask, render_template, request, url_for, redirect
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user, login_url
 from werkzeug.security import generate_password_hash, check_password_hash
 import json
+import random
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -40,7 +41,8 @@ def save_users(users):
             "country": user.country,
             "dob": user.dob,
             "gender": user.gender,
-            "user_type": user.user_type
+            "user_type": user.user_type,
+            "user_id": user.id
         } for user in users.values()
     }
     with open("users.json", "w") as f:
@@ -63,7 +65,7 @@ def load_users():
                     user.get("dob"), 
                     user.get("gender"), 
                     user.get("user_type"),
-                    id
+                    user.get("user_id"),
                 ) for id, user in data.items()
             }
             return users
@@ -106,7 +108,9 @@ def student_register():
 
         hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
 
-        user_id = username
+        user_id = random.randint(100000, 999999)
+        if user_id in users:
+            user_id = random.randint(100000, 999999)
         new_user = Users(username=username, password=hashed_password, email=email, address=address, city=city, zip=zip, country=country, dob=dob, gender=gender, user_type=user_type, id=user_id)
         users[user_id] = new_user
         save_users(users)
@@ -134,7 +138,9 @@ def parent_register():
 
         hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
 
-        user_id = username
+        user_id = random.randint(100000, 999999)
+        if user_id in users:
+            user_id = random.randint(100000, 999999)
         new_user = Users(username=username, password=hashed_password, email=email, address=address, city=city, zip=zip, country=country, dob=dob, gender=gender, user_type=user_type, id=user_id)
         users[user_id] = new_user
         save_users(users)
@@ -158,7 +164,9 @@ def admin_register():
         gender = request.form.get("gender")
         user_type = "admin"
         hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
-        user_id = username
+        user_id = random.randint(100000, 999999)
+        if user_id in users:
+            user_id = random.randint(100000, 999999)
         new_user = Users(username=username, password=hashed_password, email=email, address=address, city=city, zip=zip, country=country, dob=dob, gender=gender, user_type=user_type, id=user_id)
         users[user_id] = new_user
         save_users(users)
@@ -217,7 +225,7 @@ def parent_dashboard():
         {"id": 2, "name": "Lunch Program", "amount": 75.50},
         {"id": 3, "name": "Field Trip", "amount": 25.00},
         {"id": 4, "name": "Textbooks", "amount": 120.00},
-    ] # figure out what to do with this later
+    ] # figure out what to do with this later (involving admin dashboard)
     payment_history = [
         {"id": 1, "date": "2023-01-15", "description": "Tuition Fee - January", "amount": 500.00, "status": "Paid"},
         {"id": 2, "date": "2023-02-10", "description": "Lunch Program - February", "amount": 75.50, "status": "Paid"},
@@ -233,6 +241,56 @@ def parent_dashboard():
 @login_required
 def admin_dashboard():
     return render_template("dashboard/admin_dashboard.html", username=current_user.username)
+
+@app.route("/delete_user/<string:user_id>", methods=["POST"])
+@login_required
+def delete_user(user_id):
+    # Ensure only admins can delete users
+    if current_user.user_type != "admin":
+        return "Unauthorized: You must be an administrator to delete users.", 403
+
+    # Prevent an admin from deleting themselves
+    if current_user.id == user_id:
+        return "Error: You cannot delete your own account while logged in.", 400
+
+    if user_id in users:
+        del users[user_id]
+        save_users(users)
+        # Redirect back to the admin dashboard or a user management page
+        return redirect(url_for("admin_dashboard"))
+    else:
+        return "User not found.", 404
+
+
+# Get all user data (admin only)
+@app.route("/api/users")
+@login_required
+def get_users_api():
+    # admin users only
+    if current_user.user_type != "admin":
+        return {"error": "Unauthorized access. Only admins can view this information."}, 403
+
+    users_data_for_api = {
+        user_id: {
+            "username": user_obj.username,
+            "id": user_obj.id,
+            "email": user_obj.email,
+            "user_type": user_obj.user_type,
+            # You can add more fields if needed
+            # IMPORTANT: Do NOT include "password" as a field! hash here for security reasons!
+            # I will add connected accounts to this as well.
+        } for user_id, user_obj in users.items()
+    }
+    return users_data_for_api, 200
+
+@app.route("/profile/<string:user_id>")
+@login_required
+def profile_user(user_id):
+    user_id = user_id.replace(" ", "_")
+    user = users.get(user_id)
+    if not user:
+        return "User not found", 404
+    return render_template("profile.html", user=user, user_id=user_id)
 
 #About page route
 @app.route("/about")

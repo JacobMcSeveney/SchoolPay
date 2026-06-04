@@ -14,9 +14,6 @@
         <div class="account">
             <ul>
                 {% if current_user.is_authenticated %}
-                    {% if current_user.user_type == 'admin' %}
-                        <li><a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a></li>
-                    {% endif %}
                     <li><a href="{{ url_for('logout') }}">Logout</a></li>
                     <li><a class="active" href="{{ url_for('profile') }}">{{ current_user.username }} | Dashboard</a></li>
                 {% else %}

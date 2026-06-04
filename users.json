@@ -1,38 +1,41 @@
 {
     "admin": {
         "username": "admin",
-        "password": "pbkdf2:sha256:1000000$isA5sMk9fgOTlMEK$3a2d5dfa9c1235b5dc4b45a759b06293003da9676af11130231345748fc9142b",
-        "email": "schoolpayadmin@gmail.com",
-        "address": "14 Bay Street",
-        "city": "Tauranga",
-        "zip": "3110",
+        "password": "pbkdf2:sha256:1000000$HuJdmZE0QtlCA8at$1c562dc3f989f5c2a8740fd66d193d21805c11ee8df870ab6e266e812c649230",
+        "email": "fakeemail@gmail.com",
+        "address": "111 Random Street",
+        "city": "City",
+        "zip": "Zip",
         "country": "New Zealand",
         "dob": "2000-01-01",
         "gender": "non-binary",
-        "user_type": "admin"
+        "user_type": "admin",
+        "user_id": "admin"
     },
-    "Student Acc 1": {
-        "username": "Student Acc 1",
-        "password": "pbkdf2:sha256:1000000$YQFjgRLLyocw5A7C$eeb9f4077779d43f23ad3599c0a65e62542399f608e2c21b547960094f8897ff",
-        "email": "mcseveneyj@stu.otc.school.nz",
-        "address": "14 Bay Street",
-        "city": "Tauranga",
-        "zip": "3110",
-        "country": "New Zealand",
-        "dob": "2009-01-28",
-        "gender": "male",
-        "user_type": "student"
+    "655834": {
+        "username": "Student",
+        "password": "pbkdf2:sha256:1000000$pkIYWkbHvWlpVSAK$fa97d3d81cb2d983ce2ffb06ce1f8aa8e1dd932cb6195b8ab315b6d0e5a2e4af",
+        "email": "studentemail@email.com",
+        "address": "Address",
+        "city": "City",
+        "zip": "Zip",
+        "country": "Country",
+        "dob": "1111-01-01",
+        "gender": "other",
+        "user_type": "student",
+        "user_id": 655834
     },
-    "Parent Acc 1": {
-        "username": "Parent Acc 1",
-        "password": "pbkdf2:sha256:1000000$ZjGgP4Q59hyRsBCk$fe9b58846cedf3404c156a224e2842051262047e263f00c31f177957f8223f84",
-        "email": "mcseveneyj@stu.otc.school.nz",
-        "address": "14 Bay Street",
-        "city": "Tauranga",
-        "zip": "3110",
+    "290961": {
+        "username": "Parent",
+        "password": "pbkdf2:sha256:1000000$M2cUgILwwnGd0UxU$58de0ca69888681f2009d5969ed2e04abafaf5e1ae030d0fcbf5d80f833e70fe",
+        "email": "parentemail@email.com",
+        "address": "Address",
+        "city": "City",
+        "zip": "Zip",
         "country": "New Zealand",
-        "dob": "1997-01-20",
-        "gender": "male",
-        "user_type": "parent"
+        "dob": "1111-01-01",
+        "gender": "other",
+        "user_type": "parent",
+        "user_id": 290961
     }
 }

@@ -14,9 +14,6 @@
         <div class="account">
             <ul>
                 {% if current_user.is_authenticated %}
-                    {% if current_user.user_type == 'admin' %}
-                        <li><a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a></li>
-                    {% endif %}
                     <li><a href="{{ url_for('logout') }}">Logout</a></li>
                     <li><a class="active" href="{{ url_for('profile') }}">{{ current_user.username }} | Dashboard</a></li>
                 {% else %}
@@ -27,13 +24,21 @@
         </div>
         </nav>
         <div class="dashboard-content">
-        <h1>Welcome to the Admin Dashboard, {{ username }}!</h1>
+        <h1>Welcome to the Admin Dashboard!</h1>
         <aside class="sidebar">
             <button class="button active" onclick="switchTab('overview')">Overview</button>
             <button class="button" onclick="switchTab('settings')">Settings</button>
         </aside>
         <div id="overview-content" class="tab-content active-tab-content">
-            <section>
+            <section class="overview">
+                <h2>Overview</h2>
+                <div class="container">
+                    <h3>Users in System</h3>
+                    <p>Total Users: <span id="user-count">0</span></p>
+                    <div class="user-list-grid">
+                        <ul id="user-list"></ul>
+                    </div>
+                </div>
             </section>
         </div>
 
@@ -51,8 +56,25 @@
             document.querySelector(`.sidebar button[onclick="switchTab('${tabName}')"]`).classList.add('active');
             document.getElementById(`${tabName}-content`).classList.add('active-tab-content');
         }
-        document.addEventListener('DOMContentLoaded', () => switchTab('overview')); // Default tab on load
-    </script>
-    </div>    
+         fetch('/api/users')
+        .then(response => response.json())
+        .then(usersData => {
+            const list = document.getElementById('user-list');
+            const userCountSpan = document.getElementById('user-count');
+            let output = '';
+
+            Object.values(usersData).forEach(user => {
+            // Make each user item a clickable link to their profile view
+            const profileUrl = `/profile/${user.id}`;
+                output += `<li class="user-item"><a href="${profileUrl}"><strong>Username:</strong> ${user.username}<br><strong>Email:</strong> ${user.email}<br><strong>User Type:</strong> ${user.user_type}</a></li>`;
+            });           
+            
+            userCountSpan.textContent = Object.keys(usersData).length;
+
+            list.innerHTML = output;
+        })
+        .catch(error => console.error('Error:', error));
+        </script>
+    </div>
 </body>
 </html>

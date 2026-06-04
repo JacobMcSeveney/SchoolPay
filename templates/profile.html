@@ -3,38 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Profile - {{ current_user.username }}</title>
+    <title>{{ user.username }}'s Profile</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
     <nav>
         <ul>
-            <li><a href="{{ url_for('home') }}">Home</a></li>
-            <li><a href="{{ url_for('about') }}">About</a></li>
-            <li><a href="{{ url_for('contact') }}">Contact</a></li>
+            <li><a href="/">Home</a></li>
         </ul>
         <div class="account">
-            <ul>
-                {% if current_user.is_authenticated %}
-                    {% if current_user.user_type == 'admin' %}
-                        <li><a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a></li>
-                    {% endif %}
-                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
-                    <li><a class="active" href="{{ url_for('profile') }}">My Profile | {{ current_user.username }}</a></li>
-                {% else %}
-                    <li><a href="{{ url_for('login') }}">Login</a></li>
-                    <li><a href="{{ url_for('register') }}">Register</a></li>
-                {% endif %}
-            </ul>
+            {% if current_user.is_authenticated %}
+                <ul>
+                    <li><a href="/logout">Logout</a></li>
+                    <li><a href="/profile">My Profile | {{ current_user.username }}</a></li>
+                </ul>
+            {% else %}
+                <ul>
+                    <li><a href="/login">Login</a></li>
+                    <li><a href="/register">Register</a></li>
+                </ul>
+            {% endif %}
         </div>
     </nav>
-    <div class="container">
-        <h1>Welcome to your profile, {{ current_user.username }}!</h1>
-        <p><strong>User Type:</strong> {{ current_user.user_type | capitalize }}</p>
-        <p><strong>Email:</strong> {{ current_user.email }}</p>
 
-        <p><a href="{{ current_user.user_type }}_dashboard">Go to {{ current_user.user_type | capitalize }} Dashboard</a></p>
+    <div class="container profile-container">
+        <h1>{{ user.username }}'s Profile</h1>
+        <p><strong>User ID:</strong> {{ user.id }}</p>
+        <p><strong>User Type:</strong> {{ user.user_type | capitalize }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><strong>Address:</strong> {{ user.address }}, {{ user.city }}, {{ user.zip }}</p>
+        <p><strong>Country:</strong> {{ user.country }}</p>
+        <p><strong>Date of Birth:</strong> {{ user.dob }}</p>
+        <p><strong>Gender:</strong> {{ user.gender | capitalize }}</p>
+
+        {% if current_user.is_authenticated and current_user.user_type == 'admin' %}
+            {% if current_user.type != 'admin' %}
+                {% if current_user.id != user.id %}
+                    <form action="{{ url_for('delete_user', user_id=user.id) }}" method="post" onsubmit="return confirm('Are you sure you want to delete {{ user.username }}?');">
+                        <button type="submit" class="delete-button">Delete User</button>
+                    </form>
+                {% else %}
+                    <p class="error">You cannot delete your own account from this page.</p>
+                {% endif %}
+            {% else %}
+                    <p class="error">You cannot delete an admin account from this page.</p>
+            {% endif %}
+        {% endif %}
+
+        <a href="{{ url_for('admin_dashboard') }}" class="button">Back to Admin Dashboard</a>
     </div>
 </body>
 </html>
