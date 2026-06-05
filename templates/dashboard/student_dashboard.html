@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="/">Home</a></li>
+        </ul>
+        <div class="account">
+            <ul>
+                {% if current_user.is_authenticated %}
+                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                    <li><a href="{{ url_for('user_profile', user_id=current_user.id) }}">My Profile | {{ current_user.username }}</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('login') }}">Login</a></li>
+                    <li><a href="{{ url_for('register') }}">Register</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+    <div class="dashboard-content"> <!-- At the moment its the same as the parent dashboards but says no fees or history, will fix this when the connected accounts are coded -->
+        <h1>Welcome to the Student Dashboard, {{ username }}!</h1>
+        <aside class="sidebar">
+            <button class="button active" onclick="switchTab('overview')">Payment Fees</button>
+            <button class="button" onclick="switchTab('history')">Payment History</button> 
+            <button class="button" onclick="switchTab('settings')">Settings</button> <!--sort out history and settings later-->
+        </aside>
+        <div id="overview-content" class="tab-content active-tab-content">
+            <section class="payment-fees-section">
+                <h2>Payment Fees</h2>
+                <div class="fee-cards-container">
+                    {% if payment_fees %}
+                    {% for fee in payment_fees %}
+                        <div class="fee-card">
+                            <h3>{{ fee.name }}</h3>
+                            <p><strong>Amount Due:</strong> ${{ "%.2f"|format(fee.amount) }}</p>
+                            <p><strong>Due Date:</strong> {{ fee.due_date }}</p>
+                            <p><strong>Status:</strong> <span>{{ fee.status }}</span></p>
+                            {% if fee.status == 'Outstanding' %}
+                                <button class="pay-button" data-fee-id="{{ fee.id }}">Pay Now</button>
+                            {% else %}
+                                <button class="pay-button paid" disabled>Paid</button>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No payment fees.</p>
+                {% endif %}
+            </section>
+        </div>
+
+        <div id="history-content" class="tab-content">
+            <section class="payment-history-section">
+                <h2>Payment History</h2>
+                <div class="history-cards-container">
+                    {% if payment_history %}
+                        {% for transaction in payment_history %}
+                            <div class="history-card">
+                                <h3>{{ transaction.description }}</h3>
+                                <p><strong>Date:</strong> {{ transaction.date }}</p>
+                                <p><strong>Amount:</strong> ${{ "%.2f"|format(transaction.amount) }}</p>
+                                <p><strong>Status:</strong> <span class="payment-status-{{ transaction.status.lower() }}">{{ transaction.status }}</span></p>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>No payment history.</p>
+                    {% endif %}
+                </div>
+            </section>
+        </div>
+
+        <div id="settings-content" class="tab-content">
+            <section class="settings-section">
+                <h2>Settings</h2>
+                <p>Settings content will go here.</p>
+            </section>
+        </div>
+    </div>
+    <script>
+        function switchTab(tabName) {
+            document.querySelectorAll('.sidebar button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active-tab-content'));
+            document.querySelector(`.sidebar button[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`${tabName}-content`).classList.add('active-tab-content');
+        }
+        document.addEventListener('DOMContentLoaded', () => switchTab('overview')); // Default tab on load
+    </script>
+    </div>    
+</body>
+</html>

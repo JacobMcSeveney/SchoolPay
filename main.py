@@ -285,7 +285,7 @@ def get_users_api():
 
 @app.route("/profile/<string:user_id>")
 @login_required
-def profile_user(user_id):
+def user_profile(user_id):
     user_id = user_id.replace(" ", "_")
     user = users.get(user_id)
     if not user:

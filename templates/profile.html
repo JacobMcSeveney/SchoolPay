@@ -15,7 +15,7 @@
             {% if current_user.is_authenticated %}
                 <ul>
                     <li><a href="/logout">Logout</a></li>
-                    <li><a href="/profile">My Profile | {{ current_user.username }}</a></li>
+                    <li><a href="{{ url_for('user_profile', user_id=current_user.id) }}">My Profile | {{ current_user.username }}</a></li>
                 </ul>
             {% else %}
                 <ul>
@@ -37,6 +37,7 @@
         <p><strong>Gender:</strong> {{ user.gender | capitalize }}</p>
 
         {% if current_user.is_authenticated and current_user.user_type == 'admin' %}
+        <a href="{{ url_for('admin_dashboard') }}" class="profile-button">Back to Admin Dashboard</a>
             {% if current_user.type != 'admin' %}
                 {% if current_user.id != user.id %}
                     <form action="{{ url_for('delete_user', user_id=user.id) }}" method="post" onsubmit="return confirm('Are you sure you want to delete {{ user.username }}?');">
@@ -48,9 +49,15 @@
             {% else %}
                     <p class="error">You cannot delete an admin account from this page.</p>
             {% endif %}
+            {% else %}
+                {% if current_user.is_authenticated and current_user.user_type == 'parent' %}
+                    <a href="{{ url_for('parent_dashboard') }}" class="profile-button">Back to Dashboard</a>
+                {% else %}
+                        {% if current_user.is_authenticated and current_user.user_type == 'student' %}
+                            <a href="{{ url_for('student_dashboard') }}" class="profile-button">Back to Dashboard</a>
+                {% endif %}
+            {% endif %}
         {% endif %}
-
-        <a href="{{ url_for('admin_dashboard') }}" class="button">Back to Admin Dashboard</a>
     </div>
 </body>
 </html>
