@@ -1,0 +1,34 @@
+[
+    {
+        "id": "182400",
+        "title": "Test Announcement for All Users",
+        "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed augue lacus, sollicitudin eget lectus et, aliquam euismod diam. Sed pulvinar ultrices malesuada. Phasellus dui enim, gravida sed sem sed, pharetra iaculis nisi. Cras tincidunt a justo quis molestie. Fusce risus augue, egestas egestas nisi eu, pretium volutpat dolor. Quisque lectus mauris, rhoncus ac nulla ac, euismod euismod dolor. Integer rutrum volutpat condimentum.",
+        "target_users": "all",
+        "sender": "admin",
+        "timestamp": "2026-06-10 10:25:01"
+    },
+    {
+        "id": "912612",
+        "title": "Test Announcement for Parent Users",
+        "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed augue lacus, sollicitudin eget lectus et, aliquam euismod diam. Sed pulvinar ultrices malesuada. Phasellus dui enim, gravida sed sem sed, pharetra iaculis nisi. Cras tincidunt a justo quis molestie. Fusce risus augue, egestas egestas nisi eu, pretium volutpat dolor. Quisque lectus mauris, rhoncus ac nulla ac, euismod euismod dolor. Integer rutrum volutpat condimentum.",
+        "target_users": "parents",
+        "sender": "admin",
+        "timestamp": "2026-06-10 10:25:37"
+    },
+    {
+        "id": "614632",
+        "title": "Test Announcement for Student Users",
+        "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed augue lacus, sollicitudin eget lectus et, aliquam euismod diam. Sed pulvinar ultrices malesuada. Phasellus dui enim, gravida sed sem sed, pharetra iaculis nisi. Cras tincidunt a justo quis molestie. Fusce risus augue, egestas egestas nisi eu, pretium volutpat dolor. Quisque lectus mauris, rhoncus ac nulla ac, euismod euismod dolor. Integer rutrum volutpat condimentum.",
+        "target_users": "students",
+        "sender": "admin",
+        "timestamp": "2026-06-10 10:26:02"
+    },
+    {
+        "id": "590446",
+        "title": "Test Announcement for Admin Users",
+        "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed augue lacus, sollicitudin eget lectus et, aliquam euismod diam. Sed pulvinar ultrices malesuada. Phasellus dui enim, gravida sed sem sed, pharetra iaculis nisi. Cras tincidunt a justo quis molestie. Fusce risus augue, egestas egestas nisi eu, pretium volutpat dolor. Quisque lectus mauris, rhoncus ac nulla ac, euismod euismod dolor. Integer rutrum volutpat condimentum.",
+        "target_users": "admin",
+        "sender": "admin",
+        "timestamp": "2026-06-10 10:26:19"
+    }
+]

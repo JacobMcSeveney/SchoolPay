@@ -40,9 +40,12 @@
                             <h3>{{ fee.name }}</h3>
                             <p><strong>Amount Due:</strong> ${{ "%.2f"|format(fee.amount) }}</p>
                             <p><strong>Due Date:</strong> {{ fee.due_date }}</p>
+                            {% if fee.is_overdue %}
+                                <p>Overdue!</p>
+                            {% endif %}
                             <p><strong>Status:</strong> <span>{{ fee.status }}</span></p>
                             {% if fee.status == 'Outstanding' %}
-                                <button class="pay-button" data-fee-id="{{ fee.id }}">Pay Now</button>
+                                <button class="pay-button" href="/payment" data-fee-id="{{ fee.id }}">Pay Now</button>
                             {% else %}
                                 <button class="pay-button paid" disabled>Paid</button>
                             {% endif %}
@@ -73,7 +76,6 @@
                 </div>
             </section>
         </div>
-
         <div id="settings-content" class="tab-content">
             <section class="settings-section">
                 <h2>Settings</h2>

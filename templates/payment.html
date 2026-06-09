@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="/">Home</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <h1>Payment</h1>
+
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+
+        <form class="register-form" action="/make_payment" method="post">
+            {% if prefill_data.fee_name %}
+                <p>You are making a payment for: <strong>{{ prefill_data.fee_name }}</strong></p>
+            {% endif %}
+
+            <h2>Payment Details</h2>
+            <label for="student_id">Student/Account ID (Optional):</label>
+            <input type="text" id="student_id" name="student_id" placeholder="e.g., student username or ID" value="{{ prefill_data.student_id if prefill_data.student_id else '' }}" />
+
+            <label for="amount">Amount to Pay:</label>
+            <input type="number" id="amount" name="amount" value="{{ '%.2f'|format(prefill_data.amount) if prefill_data.amount else '' }}" required />
+
+            <h2>Payment Information</h2>
+            <label for="card_holder_name">Card Holder Name:</label>
+            <input type="text" id="card_holder_name" name="card_holder_name" required />
+
+            <label for="card_number">Card Number:</label>
+            <input type="text" id="card_number" name="card_number" pattern="[0-9]{13,16}" title="13-16 digits" required />
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="exp_month">Expiry Month:</label>
+                    <select id="exp_month" name="exp_month" required>
+                        <option value="">Month</option>
+                        {% for i in range(1, 13) %}
+                            <option value="{{ '%02d' % i }}">{{ '%02d' % i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="exp_year">Expiry Year:</label>
+                    <select id="exp_year" name="exp_year" required>
+                        <option value="">Year</option>
+                        {% for i in range(2023, 2100) %}
+                            <option value="{{ i }}">{{ i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <label for="cvv">CVV:</label>
+            <input type="text" id="cvv" name="cvv" pattern="[0-9]{3,4}" title="3 or 4 digits" required />
+
+            <button type="submit">Complete Payment</button>
+        </form>
+    </div>
+</body>
+</html>
