@@ -214,7 +214,27 @@ def logout():
 @app.route("/student_dashboard")
 @login_required
 def student_dashboard():
-    return render_template("dashboard/student_dashboard.html", username=current_user.username)
+    if current_user.user_type not in ['student', 'admin']: #will add a 'parent_of_student' here later
+        flash("Access denied. You are not a student or a parent of this student.", "error")
+        return redirect(url_for('home'))
+    payment_fees = [
+        {"id": 1, "name": "Tuition Fee", "amount": 500.00, "status": "Outstanding", "due_date": "8-23-2026"}
+    ] # figure out what to do with this later (involving admin dashboard)
+    payment_history = []
+
+    filtered_announcements_for_student = []
+    for announcement in announcements:
+        if announcement.get('target_users') in ['students', 'all']:
+            filtered_announcements_for_student.append(announcement)
+
+    student_announcements = sorted(filtered_announcements_for_student, key=lambda time: datetime.datetime.strptime(time['timestamp'], "%Y-%m-%d %H:%M:%S"), reverse=True)
+
+    for fee in payment_fees:
+        fee_due_date_obj = datetime.datetime.strptime(fee["due_date"], "%m-%d-%Y").date()
+        fee["due_date_obj"] = fee_due_date_obj
+        fee["is_overdue"] = fee_due_date_obj < current_date and fee["status"] == "Outstanding" # Only overdue if outstanding
+
+    return render_template("dashboard/student_dashboard.html", username=current_user.username, payment_fees=payment_fees, payment_history=payment_history, current_date=current_date, student_announcements=student_announcements)
 
 #Parent dashboard route
 @app.route("/parent_dashboard")
@@ -228,7 +248,18 @@ def parent_dashboard():
     ] # figure out what to do with this later (involving admin dashboard)
     payment_history = []
     current_date = datetime.date.today()
-    return render_template("dashboard/parent_dashboard.html", username=current_user.username, payment_fees=payment_fees, payment_history=payment_history, current_date=current_date)
+    filtered_announcements_for_parent = []
+    for announcement in announcements:
+        if announcement.get('target_users') in ['parents', 'all']:
+            filtered_announcements_for_parent.append(announcement)
+
+    parent_announcements = sorted(filtered_announcements_for_parent, key=lambda time: datetime.datetime.strptime(time['timestamp'], "%Y-%m-%d %H:%M:%S"), reverse=True)
+
+    for fee in payment_fees:
+        fee_due_date_obj = datetime.datetime.strptime(fee["due_date"], "%m-%d-%Y").date()
+        fee["due_date_obj"] = fee_due_date_obj
+        fee["is_overdue"] = fee_due_date_obj < current_date and fee["status"] == "Outstanding" # Only overdue if outstanding
+    return render_template("dashboard/parent_dashboard.html", username=current_user.username, payment_fees=payment_fees, payment_history=payment_history, current_date=current_date, parent_announcements=parent_announcements)
 
 #Admin dashboard route
 @app.route("/admin_dashboard")
@@ -251,9 +282,9 @@ def load_announcements():
             return []
     return []
 
-# Load announcements when the app starts
+# Load announcements
 announcements = load_announcements()
-# Route for making announcements from the admin dashboard
+# Route for making announcements (admin only)
 @app.route("/admin/make_announcement", methods=["POST"])
 @login_required
 def make_announcement():
