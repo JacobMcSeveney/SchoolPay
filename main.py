@@ -293,9 +293,10 @@ def make_announcement():
 
     title = request.form.get("announcement_title")
     content = request.form.get("announcement_content")
+    payment = request.form.get("announcement_payment")
     target_users = request.form.get("target_users")
 
-    if not all([title, content, target_users]):
+    if not all([title, content, payment, target_users]):
         announcement_message = {"text": "An Error Occurred!", "type": "error"}
         return render_template("dashboard/admin_dashboard.html", username=current_user.username, announcements=announcements, announcement_message=announcement_message)
 
@@ -303,6 +304,7 @@ def make_announcement():
         "id": str(random.randint(100000, 999999)),
         "title": title,
         "content": content,
+        "payment": payment,
         "target_users": target_users,
         "sender": current_user.username,
         "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
