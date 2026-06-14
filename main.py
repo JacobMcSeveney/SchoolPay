@@ -265,7 +265,8 @@ def parent_dashboard():
 @app.route("/admin_dashboard")
 @login_required
 def admin_dashboard():
-    return render_template("dashboard/admin_dashboard.html", username=current_user.username, announcements=announcements)
+    sort_announcements = sorted(announcements, key=lambda announcement: datetime.datetime.strptime(announcement['timestamp'], "%Y-%m-%d %H:%M:%S"), reverse=True)
+    return render_template("dashboard/admin_dashboard.html", username=current_user.username, announcements=sort_announcements)
 
 announcements_file = "announcements.json"
 
@@ -313,8 +314,10 @@ def make_announcement():
     announcements.append(new_announcement)
     save_announcements(announcements)
 
+    sort_announcements = sorted(announcements, key=lambda announcement: datetime.datetime.strptime(announcement['timestamp'], "%Y-%m-%d %H:%M:%S"), reverse=True)
+
     announcement_message = {"text": "Announcement published successfully!", "type": "success"}
-    return render_template("dashboard/admin_dashboard.html", username=current_user.username, announcements=announcements, announcement_message=announcement_message)
+    return render_template("dashboard/admin_dashboard.html", username=current_user.username, announcements=sort_announcements, announcement_message=announcement_message)
 
 @app.route("/delete_user/<string:user_id>", methods=["POST"])
 @login_required

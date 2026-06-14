@@ -304,6 +304,21 @@ input[type=submit]:hover {
     background-color: #45a049;
 }
 
+input[type=number], select {
+    width: 50%;
+    padding: 12px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+input[type=number]:focus, select:focus {
+    outline: none;
+    border-color: #1E6BD6;
+}
+
 .back-link {
     display: inline-block;
     background-color: #1E6BD6;
@@ -786,4 +801,35 @@ textarea:focus {
     max-height: 20px;
     margin-top: 10px;
     padding: 20px;
+}
+
+.symbol {
+    position: absolute;
+    color: #555;
+    font-size: 1em;
+    left: 8px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.pay-amount {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.pay-amount input[type="number"] {
+    padding-left: 25px;
+    width: 100%;
+    height: 43px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.pay-amount input[type="number"]:focus {
+    outline: none;
+    border-color: #1E6BD6;
 }

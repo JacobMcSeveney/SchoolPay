@@ -61,7 +61,10 @@
                         <option value="free">Free</option>
                         <option value="paid">Paid</option>
                     </select>
-                    <input class="payment-input" id="pay_amount" name="pay_amount" type="number" step="0.5" min="0" placeholder="$ Amount">
+                    <div class="pay-amount">
+                        <span class="symbol">$</span>
+                        <input id="pay_amount" name="pay_amount" type="number" step="0.5" min="0" placeholder="Amount">
+                    </div>
                     <br><br>
                     <label for="target_users">Target Users:</label>
                     <br>
@@ -137,6 +140,7 @@
             list.innerHTML = output;
         })
         .catch(error => console.error('Error:', error));
+        document.addEventListener('DOMContentLoaded', () => switchTab('overview'));
         </script>
     </div>
 </body>
