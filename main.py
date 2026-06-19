@@ -1,8 +1,10 @@
 from flask import Flask, render_template, request, url_for, redirect
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user, login_url
 from werkzeug.security import generate_password_hash, check_password_hash
-import json, random, datetime, os
+import json, random, datetime, os, uuid
 from flask import flash
+
+admin_dashboard_data = []
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -214,12 +216,13 @@ def logout():
 @app.route("/student_dashboard")
 @login_required
 def student_dashboard():
-    if current_user.user_type not in ['student', 'admin']: #will add a 'parent_of_student' here later
+    if current_user.user_type not in ['student', 'admin']: # Will add a 'parent_of_student' here later
         flash("Access denied. You are not a student or a parent of this student.", "error")
         return redirect(url_for('home'))
+    current_date = datetime.date.today()
     payment_fees = [
         {"id": 1, "name": "Tuition Fee", "amount": 500.00, "status": "Outstanding", "due_date": "8-23-2026"}
-    ] # figure out what to do with this later (involving admin dashboard)
+    ] # Figure out what to do with this later (involving admin dashboard)
     payment_history = []
 
     filtered_announcements_for_student = []
@@ -243,32 +246,69 @@ def parent_dashboard():
     if current_user.user_type not in ['parent', 'admin']:
         flash("Access denied. You are not a parent.", "error")
         return redirect(url_for('home'))
-    payment_fees = [
-        {"id": 1, "name": "Tuition Fee", "amount": 500.00, "status": "Outstanding", "due_date": "8-23-2026"}
-    ] # figure out what to do with this later (involving admin dashboard)
-    payment_history = []
     current_date = datetime.date.today()
-    filtered_announcements_for_parent = []
+
+    payment_fees = []
+
+    user_announcement_fees = get_user_fees(current_user.id)
+    for fee_data in user_announcement_fees:
+        fee_entry = {
+            "id": hash(fee_data.get("id")) % 100000 + 10000,
+            "fee_data_id": fee_data.get("id"),
+            "announcement_id": fee_data.get("announcement_id"),
+            "name": fee_data.get("name", "Announcement Fee"),
+            "amount": fee_data.get("amount", 0),
+            "status": fee_data.get("status", "Outstanding"),
+            "due_date": fee_data.get("due_date", (current_date + datetime.timedelta(days=30)).strftime("%m-%d-%Y")), # Will implement due date into the admin dashboard announcement too
+            "is_announcement_fee": True
+        }
+        due_obj = datetime.datetime.strptime(fee_entry["due_date"], "%m-%d-%Y").date()
+        fee_entry["due_date_obj"] = due_obj
+        fee_entry["is_overdue"] = due_obj < current_date and fee_entry["status"] == "Outstanding"
+        payment_fees.append(fee_entry)
+
+    # Payment history
+    payment_history = []
+    user_id_str = str(current_user.id)
+    for save in announcement_payments:
+        if str(save.get("user_id")) == user_id_str:
+            payment_history.append({
+                "description": save.get("title", "Announcement"),
+                "date": save.get("timestamp", ""),
+                "amount": save.get("amount", 0),
+                "status": "Completed" if save.get("type") == "free" else "Paid"
+            })
+
+    # Filter announcements for parents
+    filter_parent_announcements = []
     for announcement in announcements:
         if announcement.get('target_users') in ['parents', 'all']:
-            filtered_announcements_for_parent.append(announcement)
+            filter_parent_announcements.append(announcement)
 
-    parent_announcements = sorted(filtered_announcements_for_parent, key=lambda time: datetime.datetime.strptime(time['timestamp'], "%Y-%m-%d %H:%M:%S"), reverse=True)
+    parent_announcements = sorted(filter_parent_announcements, key=lambda time: datetime.datetime.strptime(time['timestamp'], "%Y-%m-%d %H:%M:%S"), reverse=True)
+
+    # Check which announcements have already been saved
+    user_added_fees = {fee.get("announcement_id") for fee in user_announcement_fees}
+    user_saved_free = {save.get("announcement_id") for save in announcement_payments if str(save.get("user_id")) == user_id_str}
 
     for fee in payment_fees:
-        fee_due_date_obj = datetime.datetime.strptime(fee["due_date"], "%m-%d-%Y").date()
-        fee["due_date_obj"] = fee_due_date_obj
-        fee["is_overdue"] = fee_due_date_obj < current_date and fee["status"] == "Outstanding" # Only overdue if outstanding
-    return render_template("dashboard/parent_dashboard.html", username=current_user.username, payment_fees=payment_fees, payment_history=payment_history, current_date=current_date, parent_announcements=parent_announcements)
+        if not fee.get("is_announcement_fee"):
+            fee_due_date_obj = datetime.datetime.strptime(fee["due_date"], "%m-%d-%Y").date()
+            fee["due_date_obj"] = fee_due_date_obj
+            fee["is_overdue"] = fee_due_date_obj < current_date and fee["status"] == "Outstanding" # Only overdue if outstanding
+
+    return render_template("dashboard/parent_dashboard.html", username=current_user.username, payment_fees=payment_fees, payment_history=payment_history, current_date=current_date, parent_announcements=parent_announcements, user_added_fees=user_added_fees, user_saved_free=user_saved_free)
 
 #Admin dashboard route
 @app.route("/admin_dashboard")
 @login_required
 def admin_dashboard():
     sort_announcements = sorted(announcements, key=lambda announcement: datetime.datetime.strptime(announcement['timestamp'], "%Y-%m-%d %H:%M:%S"), reverse=True)
-    return render_template("dashboard/admin_dashboard.html", username=current_user.username, announcements=sort_announcements)
+    return render_template("dashboard/admin_dashboard.html", username=current_user.username, announcements=sort_announcements, transactions=admin_dashboard_data)
 
 announcements_file = "announcements.json"
+user_fees_file = "user_fees.json"
+payment_history_file = "payments.json"
 
 def save_announcements(announcements_data):
     with open(announcements_file, "w") as f:
@@ -283,8 +323,55 @@ def load_announcements():
             return []
     return []
 
+def save_user_fees(fees_data):
+    with open(user_fees_file, "w") as f:
+        json.dump(fees_data, f, indent=4)
+
+def load_user_fees():
+    if os.path.exists(user_fees_file):
+        try:
+            with open(user_fees_file, "r") as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            return {}
+    return {}
+
+def save_announcement_payments(payments_data):
+    with open(payment_history_file, "w") as f:
+        json.dump(payments_data, f, indent=4)
+
+def load_announcement_payments():
+    if os.path.exists(payment_history_file):
+        try:
+            with open(payment_history_file, "r") as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            return []
+    return []
+
 # Load announcements
 announcements = load_announcements()
+user_fees = load_user_fees()
+announcement_payments = load_announcement_payments()
+
+def get_user_fees(user_id):
+    return user_fees.get(str(user_id), [])
+
+def add_user_fee(user_id, fee_data):
+    user_id_str = str(user_id)
+    if user_id_str not in user_fees:
+        user_fees[user_id_str] = []
+    user_fees[user_id_str].append(fee_data)
+    save_user_fees(user_fees)
+
+def mark_user_fee_paid(user_id, fee_id):
+    user_id_str = str(user_id)
+    if user_id_str in user_fees:
+        for fee in user_fees[user_id_str]:
+            if str(fee.get("id")) == str(fee_id):
+                fee["status"] = "Paid"
+                break
+        save_user_fees(user_fees)
 # Route for making announcements (admin only)
 @app.route("/admin/make_announcement", methods=["POST"])
 @login_required
@@ -294,18 +381,34 @@ def make_announcement():
 
     title = request.form.get("announcement_title")
     content = request.form.get("announcement_content")
-    payment = request.form.get("announcement_payment")
+    payment_select = request.form.get("payment_select")
+    payment_amount = request.form.get("announcement_payment")
     target_users = request.form.get("target_users")
 
-    if not all([title, content, payment, target_users]):
-        announcement_message = {"text": "An Error Occurred!", "type": "error"}
+    if not all([title, content, payment_select, target_users]):
+        announcement_message = {"text": "All fields are required!", "type": "error"}
         return render_template("dashboard/admin_dashboard.html", username=current_user.username, announcements=announcements, announcement_message=announcement_message)
+
+
+    if payment_select == "none":
+        payment_type = "none"
+        payment_amount_value = None
+    elif payment_select == "free":
+        payment_type = "free"
+        payment_amount_value = None
+    else:
+        payment_type = "paid"
+        try:
+            payment_amount_value = float(payment_amount) if payment_amount else 0.0
+        except (ValueError, TypeError):
+            payment_amount_value = 0.0
 
     new_announcement = {
         "id": str(random.randint(100000, 999999)),
         "title": title,
         "content": content,
-        "payment": payment,
+        "payment_type": payment_type,
+        "payment_amount": payment_amount_value,
         "target_users": target_users,
         "sender": current_user.username,
         "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -318,6 +421,82 @@ def make_announcement():
 
     announcement_message = {"text": "Announcement published successfully!", "type": "success"}
     return render_template("dashboard/admin_dashboard.html", username=current_user.username, announcements=sort_announcements, announcement_message=announcement_message)
+
+
+@app.route("/add_announcement_payment/<announcement_id>", methods=["POST"])
+@login_required
+def add_announcement_payment(announcement_id):
+    if current_user.user_type not in ['parent', 'admin']:
+        return "Unauthorized", 403
+
+    # Find the announcement
+    announcement = next((a for a in announcements if a["id"] == announcement_id), None)
+    if not announcement:
+        flash("Announcement not found.", "error")
+        return redirect(url_for("parent_dashboard"))
+
+    if announcement.get("payment_type") != "paid":
+        flash("This announcement does not have a payable fee.", "error")
+        return redirect(url_for("parent_dashboard"))
+
+    # Check if already added
+    existing_fees = get_user_fees(current_user.id)
+    for fee in existing_fees:
+        if str(fee.get("announcement_id")) == str(announcement_id):
+            flash("This announcement fee has already been added to your fees.", "warning")
+            return redirect(url_for("parent_dashboard"))
+
+    # Add as a pending payment
+    fee_id = str(random.randint(100000, 999999))
+    new_fee = {
+        "id": fee_id,
+        "announcement_id": announcement_id,
+        "name": announcement["title"],
+        "amount": announcement.get("payment_amount", 0),
+        "status": "Outstanding",
+        "due_date": (datetime.date.today() + datetime.timedelta(days=30)).strftime("%m-%d-%Y"),
+        "added_on": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+    add_user_fee(current_user.id, new_fee)
+    flash(f"Announcement fee '{announcement['title']}' has been added to your payment fees.", "success")
+    return redirect(url_for("parent_dashboard"))
+
+@app.route("/free_announcement_payment/<announcement_id>", methods=["POST"])
+@login_required
+def free_announcement_payment(announcement_id):
+    if current_user.user_type not in ['parent', 'admin']:
+        return "Unauthorized", 403
+
+    announcement = next((a for a in announcements if a["id"] == announcement_id), None)
+    if not announcement:
+        flash("Announcement not found.", "error")
+        return redirect(url_for("parent_dashboard"))
+
+    if announcement.get("payment_type") != "free":
+        flash("This announcement is not a free event.", "error")
+        return redirect(url_for("parent_dashboard"))
+
+    # Check if already saved.
+    for save in announcement_payments:
+        if str(save.get("announcement_id")) == str(announcement_id) and str(save.get("user_id")) == str(current_user.id):
+            flash("You have already saved this free announcement.", "warning")
+            return redirect(url_for("parent_dashboard"))
+
+    # Save free announcements in history
+    save = {
+        "id": str(random.randint(100000, 999999)),
+        "announcement_id": announcement_id,
+        "user_id": str(current_user.id),
+        "username": current_user.username,
+        "title": announcement["title"],
+        "type": "free",
+        "amount": 0,
+        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+    announcement_payments.append(save)
+    save_announcement_payments(announcement_payments)
+    flash(f"Free announcement '{announcement['title']}' has been saved.", "success")
+    return redirect(url_for("parent_dashboard"))
 
 @app.route("/delete_user/<string:user_id>", methods=["POST"])
 @login_required
@@ -353,8 +532,6 @@ def get_users_api():
             "id": user_obj.id,
             "email": user_obj.email,
             "user_type": user_obj.user_type,
-            # You can add more fields if needed
-            # IMPORTANT: Do NOT include "password" as a field!
             # I will add connected accounts to this as well.
         } for user_id, user_obj in users.items()
     }
@@ -386,17 +563,13 @@ def contact():
 def payment(fee_id):
     prefill_data = {}
     if fee_id:
-        all_possible_fees = [
-            {"id": 1, "name": "Tuition Fee", "amount": 500.00, "status": "Outstanding", "due_date": "12-25-2024"},
-            {"id": 2, "name": "Textbook Fee", "amount": 75.50, "status": "Outstanding", "due_date": "01-15-2023"},
-            {"id": 3, "name": "Activity Fund", "amount": 25.00, "status": "Outstanding", "due_date": "10-01-2023"}
-        ]
+        all_possible_fees = []
         
         selected_fee = next((fee for fee in all_possible_fees if fee["id"] == fee_id and fee["status"] == "Outstanding"), None)
 
         if selected_fee:
             prefill_data = {
-                "student_id": current_user.username,
+                "id": current_user.username,
                 "amount": selected_fee["amount"],
                 "fee_name": selected_fee["name"]
             }
@@ -404,6 +577,39 @@ def payment(fee_id):
             pass
 
     return render_template("payment.html", prefill_data=prefill_data)
+
+@app.route('/make_payment', methods=['POST'])
+def make_payment():
+    id = request.form.get('id')
+    amount = float(request.form.get('amount'))
+    card_name = request.form.get('card_holder_name')
+    card_number = request.form.get('card_number')
+
+    try:
+        transaction_id = str(uuid.uuid4())[:12].upper()
+
+        card_preview = f"Card Ending in {card_number[-4:]}"
+        
+        payment_record = {
+            "transaction_id": transaction_id,
+            "id": id,
+            "amount": amount,
+            "card_holder": card_name,
+            "card_info": card_preview,
+            "status": "Paid"
+        }
+        
+        admin_dashboard_data.append(payment_record)
+
+        return render_template(
+            'make_payment.html', 
+            id=id, 
+            amount=amount, 
+            transaction_id=transaction_id
+        )
+
+    except Exception as e:
+        return render_template('payment.html', error="Payment failed. Please try again.", prefill_data={})
 
 if __name__ == "__main__":
    app.run(debug=True)

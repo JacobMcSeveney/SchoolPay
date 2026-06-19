@@ -23,13 +23,22 @@
             </ul>
         </div>
     </nav>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
     <div class="dashboard-content">
         <h1>Welcome to the Parent Dashboard, {{ username }}!</h1>
         <aside class="sidebar">
             <button class="button active" onclick="switchTab('overview')">Payment Fees</button>
             <button class="button" onclick="switchTab('announcements')">Announcements</button>
-            <button class="button" onclick="switchTab('history')">Payment History</button> 
-            <button class="button" onclick="switchTab('settings')">Settings</button> <!--sort out history and settings later-->
+            <button class="button" onclick="switchTab('history')">Payment History</button>
+            <button class="button" onclick="switchTab('settings')">Settings</button>
         </aside>
         <div id="overview-content" class="tab-content active-tab-content">
             <section class="payment-fees-section">
@@ -42,11 +51,15 @@
                             <p><strong>Amount Due:</strong> ${{ "%.2f"|format(fee.amount) }}</p>
                             <p><strong>Due Date:</strong> {{ fee.due_date }}</p>
                             {% if fee.is_overdue %}
-                                <p>Overdue!</p>
+                                <p><strong>Status:</strong> <span class="fee-status-outstanding">Overdue!</span></p>
+                            {% else %}
+                                <p><strong>Status:</strong> <span>{{ fee.status }}</span></p>
                             {% endif %}
-                            <p><strong>Status:</strong> <span>{{ fee.status }}</span></p>
+                            {% if fee.is_announcement_fee %}
+                                <p><em>Added from an announcement</em></p>
+                            {% endif %}
                             {% if fee.status == 'Outstanding' %}
-                                <button class="pay-button" href="/payment" data-fee-id="{{ fee.id }}">Pay Now</button>
+                                <a href="{{ url_for('payment', fee_id=fee.id) }}" class="pay-button">Pay Now</a>
                             {% else %}
                                 <button class="pay-button paid" disabled>Paid</button>
                             {% endif %}
@@ -87,6 +100,25 @@
                             <div class="announcement-card">
                                 <h3>{{ announcement.title }}</h3>
                                 <p>{{ announcement.content }}</p>
+                                {% if announcement.payment_type == 'paid' %}
+                                    <p><strong>Payment Required:</strong> ${{ "%.2f"|format(announcement.payment_amount) }}</p>
+                                    {% if announcement.id in user_added_fees %}
+                                        <button class="pay-button paid" disabled>Already Added to Fees</button>
+                                    {% else %}
+                                        <form action="{{ url_for('add_announcement_payment', announcement_id=announcement.id) }}" method="POST">
+                                            <button type="submit" class="pay-button">Add to My Fees</button>
+                                        </form>
+                                    {% endif %}
+                                {% elif announcement.payment_type == 'free' %}
+                                    <p><strong>Payment:</strong> Free</p>
+                                    {% if announcement.id in user_recorded_free %}
+                                        <button class="pay-button paid" disabled>Already Recorded</button>
+                                    {% else %}
+                                        <form action="{{ url_for('free_announcement_payment', announcement_id=announcement.id) }}" method="POST">
+                                            <button type="submit" class="pay-button">Mark as Free</button>
+                                        </form>
+                                    {% endif %}
+                                {% endif %}
                                 <small>Published on {{ announcement.timestamp }}</small>
                             </div>
                         {% endfor %}
@@ -111,8 +143,7 @@
             document.querySelector(`.sidebar button[onclick="switchTab('${tabName}')"]`).classList.add('active');
             document.getElementById(`${tabName}-content`).classList.add('active-tab-content');
         }
-        document.addEventListener('DOMContentLoaded', () => switchTab('overview')); // Default tab on load
+        document.addEventListener('DOMContentLoaded', () => switchTab('overview'));
     </script>
-    </div>    
 </body>
 </html>

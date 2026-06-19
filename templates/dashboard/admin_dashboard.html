@@ -55,15 +55,16 @@
                     <textarea id="announcement_content" name="announcement_content" rows="5" required></textarea>
                     <br><br>
                     <label for="announcement_payment">Payment:</label>
-                    <select id="announcement_payment" name="announcement_payment" required>
+                    <br>
+                    <select id="payment_select" name="payment_select" required>
                         <option value="">Select Payment</option>
                         <option value="none">None</option>
                         <option value="free">Free</option>
                         <option value="paid">Paid</option>
                     </select>
-                    <div class="pay-amount">
+                    <div class="pay-amount" id="pay-amount-container" style="display:none;">
                         <span class="symbol">$</span>
-                        <input id="pay_amount" name="pay_amount" type="number" step="0.5" min="0" placeholder="Amount">
+                        <input id="announcement_payment" name="announcement_payment" type="number" step="0.5" min="0" placeholder="Amount">
                     </div>
                     <br><br>
                     <label for="target_users">Target Users:</label>
@@ -80,7 +81,7 @@
                 </form>
         
                 {% if announcement_message %}
-                    <p class="{{ announcement_message.type }}">{{ announcement_message.txt }}</p>
+                    <p class="{{ announcement_message.type }}">{{ announcement_message.text }}</p>
                 {% endif %}
 
                 <h2 style="margin-top: 40px;">Existing Announcements</h2>
@@ -90,9 +91,17 @@
                             <div class="announcement-card">
                                 <h3> {{ announcement.title }} </h3>
                                 <p> {{ announcement.content }} </p>
-                                {% if announcement.payment == 'paid' %}
-                                    <p> {{ announcement.pay_amount }} </p>
-                                {% endif %}
+                                {% if announcement.payment_type == 'paid' %}
+                                    <p>Payment: ${{ "%.2f"|format(announcement.payment_amount) }}</p>
+                                {% elif announcement.payment_type == 'free' %}
+                                    <p>Payment: Free</p>
+                                {% elif announcement.get('payment') and announcement.get('payment') != 'none' %}
+                                    {% if announcement.get('payment') == 'free' or announcement.get('payment')|string == '0' %}
+                                        <p>Payment: Free</p>
+                                    {% else %}
+                                        <p>Payment: ${{ "%.2f"|format(announcement.get('payment')|float) }}</p>
+                                    {% endif %}
+                                {% endif %} 
                                 <small> Published by {{ announcement.sender }} on {{ announcement.timestamp }} for {{ announcement.target_users }} </small>
                             </div>
                         {% endfor %}
@@ -140,7 +149,23 @@
             list.innerHTML = output;
         })
         .catch(error => console.error('Error:', error));
-        document.addEventListener('DOMContentLoaded', () => switchTab('overview'));
+
+        // Show/hide payment amount input based on payment selection
+        document.addEventListener('DOMContentLoaded', () => {
+            switchTab('overview');
+            const paymentSelect = document.getElementById('payment_select');
+            const payAmountContainer = document.getElementById('pay-amount-container');
+            if (paymentSelect) {
+                paymentSelect.addEventListener('change', function() {
+                    if (this.value === 'paid') {
+                        payAmountContainer.style.display = 'inline-flex';
+                    } else {
+                        payAmountContainer.style.display = 'none';
+                        document.getElementById('announcement_payment').value = '';
+                    }
+                });
+            }
+        });
         </script>
     </div>
 </body>

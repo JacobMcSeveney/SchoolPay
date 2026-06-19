@@ -13,6 +13,8 @@
         </ul>
     </nav>
 
+    <a style="position: relative; left: 1%; top: 15px;" class="back-link" href="/parent_dashboard">Back</a>
+
     <div class="container">
         <h1>Payment</h1>
 
@@ -26,8 +28,8 @@
             {% endif %}
 
             <h2>Payment Details</h2>
-            <label for="student_id">Student/Account ID (Optional):</label>
-            <input type="text" id="student_id" name="student_id" placeholder="e.g., student username or ID" value="{{ prefill_data.student_id if prefill_data.student_id else '' }}" />
+            <label for="id">Student/Account ID:</label>
+            <input type="text" id="id" name="id" placeholder="e.g. student username or ID" value="{{ prefill_data.id if prefill_data.id else '' }}" />
 
             <label for="amount">Amount to Pay:</label>
             <input type="number" id="amount" name="amount" value="{{ '%.2f'|format(prefill_data.amount) if prefill_data.amount else '' }}" required />
