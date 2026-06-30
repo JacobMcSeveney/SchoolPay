@@ -588,6 +588,20 @@ def delete_user(user_id):
     else:
         return "User not found.", 404
 
+@app.route("/delete_announcement/<string:announcement_id>", methods=["POST"])
+@login_required
+def delete_announcement(announcement_id):
+    # Ensure only admins can delete announcements
+    if current_user.user_type != "admin":
+        return "Unauthorized: You must be an administrator to delete announcements.", 403
+
+    announcement = next((a for a in announcements if a["id"] == announcement_id), None)
+    if announcement:
+        announcements.remove(announcement)
+        save_announcements(announcements)
+        return redirect(url_for("admin_dashboard"))
+    else:
+        return "Announcement not found.", 404
 
 # Get all user data (admin only)
 @app.route("/api/users")
