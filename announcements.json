@@ -1,12 +1,12 @@
 [
     {
-        "id": "439693",
-        "title": "Payment Test",
-        "content": "Payment Test",
+        "id": "561328",
+        "title": "School Trip",
+        "content": "Get ready for an exciting adventure! We are thrilled to announce our upcoming school field trip to the [Insert Destination] on [Insert Date]. This hands-on experience will bring our classroom lessons to life and offer students a fantastic opportunity to explore new environments together. Please review the information and return the signed forms by [Insert Deadline Date]. We look forward to a safe, educational, and unforgettable day of learning and fun!",
         "payment_type": "paid",
-        "payment_amount": 50.0,
+        "payment_amount": 25.0,
         "target_users": "all",
         "sender": "admin",
-        "timestamp": "2026-06-17 10:58:04"
+        "timestamp": "2026-06-29 10:00:21"
     }
 ]

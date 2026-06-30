@@ -20,12 +20,13 @@
         <p>Thank you for your payment. Your transaction has been processed.</p>
         <div class="receipt-box" style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <h2>Receipt Details</h2>
+            <p><strong>Payment For:</strong> {{ fee_name if fee_name else 'General Payment' }}</p>
             <p><strong>ID:</strong> {{ id if id else 'N/A' }}</p>
             <p><strong>Amount Paid:</strong> ${{ "%.2f"|format(amount) }}</p>
             <p><strong>Transaction ID:</strong> {{ transaction_id }}</p>
         </div>
 
-        <a href="/{user.user_type}_dashboard" class="btn">Return to Dashboard</a>
+        <a href="/parent_dashboard" class="btn">Return to Dashboard</a>
     </div>
 </body>
 </html>

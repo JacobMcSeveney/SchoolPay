@@ -28,17 +28,24 @@
 
     <div class="container profile-container">
         <h1>{{ user.username }}'s Profile</h1>
-        <p><strong>User ID:</strong> {{ user.id }}</p>
-        <p><strong>User Type:</strong> {{ user.user_type | capitalize }}</p>
-        <p><strong>Email:</strong> {{ user.email }}</p>
-        <p><strong>Address:</strong> {{ user.address }}, {{ user.city }}, {{ user.zip }}</p>
-        <p><strong>Country:</strong> {{ user.country }}</p>
-        <p><strong>Date of Birth:</strong> {{ user.dob }}</p>
-        <p><strong>Gender:</strong> {{ user.gender | capitalize }}</p>
+        <aside class="sidebar">
+            {% if current_user.is_authenticated and current_user.user_type == 'admin' %}
+                <button class="button active" onclick="switchTab('overview')">Overview</button>
+                <button class="button" onclick="switchTab('history')">Payment History</button>
+            {% endif %}
+        </aside>
 
-        {% if current_user.is_authenticated and current_user.user_type == 'admin' %}
-        <a href="{{ url_for('admin_dashboard') }}" class="profile-button">Back to Admin Dashboard</a>
-            {% if current_user.type != 'admin' %}
+        <div id="overview-content" class="tab-content active-tab-content">
+            <section class="overview">
+                <h2>Overview</h2>
+                <p><strong>User ID:</strong> {{ user.id }}</p>
+                <p><strong>User Type:</strong> {{ user.user_type | capitalize }}</p>
+                <p><strong>Email:</strong> {{ user.email }}</p>
+                <p><strong>Address:</strong> {{ user.address }}, {{ user.city }}, {{ user.zip }}</p>
+                <p><strong>Country:</strong> {{ user.country }}</p>
+                <p><strong>Date of Birth:</strong> {{ user.dob }}</p>
+                <p><strong>Gender:</strong> {{ user.gender | capitalize }}</p>
+                <a href="{{ url_for('admin_dashboard') }}" class="profile-button">Back to Admin Dashboard</a>
                 {% if current_user.id != user.id %}
                     <form action="{{ url_for('delete_user', user_id=user.id) }}" method="post" onsubmit="return confirm('Are you sure you want to delete {{ user.username }}?');">
                         <button type="submit" class="delete-button">Delete User</button>
@@ -46,18 +53,39 @@
                 {% else %}
                     <p class="error">You cannot delete your own account from this page.</p>
                 {% endif %}
-            {% else %}
-                    <p class="error">You cannot delete an admin account from this page.</p>
-            {% endif %}
-            {% else %}
-                {% if current_user.is_authenticated and current_user.user_type == 'parent' %}
-                    <a href="{{ url_for('parent_dashboard') }}" class="profile-button">Back to Dashboard</a>
-                {% else %}
-                        {% if current_user.is_authenticated and current_user.user_type == 'student' %}
-                            <a href="{{ url_for('student_dashboard') }}" class="profile-button">Back to Dashboard</a>
-                {% endif %}
-            {% endif %}
-        {% endif %}
+            </section>
+        </div>
+
+        <div id="history-content" class="tab-content">
+            <section class="payment-history-section">
+                <h2>Payment History</h2>
+                <div class="history-cards-container">
+                    {% if payment_history %}
+                        {% for transaction in payment_history %}
+                            <div class="history-card">
+                                <h3>{{ transaction.description if transaction.description else 'N/A' }}</h3>
+                                <p><strong>Date:</strong> {{ transaction.date }}</p>
+                                <p><strong>Amount:</strong> ${{ "%.2f"|format(transaction.amount) }}</p>
+                                <p><strong>Status:</strong> <span class="payment-status-{{ transaction.status.lower() }}">{{ transaction.status }}</span></p>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>No payment history.</p>
+                    {% endif %}
+                </div>
+            </section>
+        </div>
+
+        <script>
+            function switchTab(tabName) {
+                document.querySelectorAll('.sidebar button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active-tab-content'));
+                document.querySelector(`.sidebar button[onclick="switchTab('${tabName}')"]`).classList.add('active');
+                document.getElementById(`${tabName}-content`).classList.add('active-tab-content');
+            }
+
+            document.addEventListener('DOMContentLoaded', () => switchTab('overview'));
+        </script>
     </div>
 </body>
 </html>

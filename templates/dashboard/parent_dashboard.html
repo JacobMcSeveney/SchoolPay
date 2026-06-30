@@ -59,7 +59,7 @@
                                 <p><em>Added from an announcement</em></p>
                             {% endif %}
                             {% if fee.status == 'Outstanding' %}
-                                <a href="{{ url_for('payment', fee_id=fee.id) }}" class="pay-button">Pay Now</a>
+                                <a href="{{ url_for('payment', fee_id=fee.fee_data_id) }}" class="pay-button">Pay Now</a>
                             {% else %}
                                 <button class="pay-button paid" disabled>Paid</button>
                             {% endif %}
@@ -111,7 +111,7 @@
                                     {% endif %}
                                 {% elif announcement.payment_type == 'free' %}
                                     <p><strong>Payment:</strong> Free</p>
-                                    {% if announcement.id in user_recorded_free %}
+                                    {% if announcement.id in user_saved_free %}
                                         <button class="pay-button paid" disabled>Already Recorded</button>
                                     {% else %}
                                         <form action="{{ url_for('free_announcement_payment', announcement_id=announcement.id) }}" method="POST">

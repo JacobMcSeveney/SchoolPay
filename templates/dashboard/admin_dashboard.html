@@ -28,6 +28,7 @@
         <aside class="sidebar">
             <button class="button active" onclick="switchTab('overview')">User Overview</button>
             <button class="button" onclick="switchTab('announcements')">Announcements</button>
+            <button class="button" onclick="switchTab('payments')">All User Payments</button>
             <button class="button" onclick="switchTab('settings')">Settings</button>
         </aside>
         <div id="overview-content" class="tab-content active-tab-content">
@@ -112,6 +113,29 @@
             </section>
         </div>
 
+        <div id="payments-content" class="tab-content">
+            <section class="payment-history-section">
+                <h2>All User Payments</h2>
+                <div class="history-cards-container">
+                    {% if all_payments %}
+                        {% for payment in all_payments %}
+                            <div class="history-card">
+                                <h3>{{ payment.title }}</h3>
+                                <p><strong>User:</strong> {{ payment.username }} (ID: {{ payment.user_id }})</p>
+                                <p><strong>Amount:</strong> ${{ "%.2f"|format(payment.amount) }}</p>
+                                <p><strong>Type:</strong> {{ payment.type }}</p>
+                                <p><strong>Card:</strong> {{ payment.card_info }}</p>
+                                <p><strong>Transaction:</strong> {{ payment.transaction_id }}</p>
+                                <p><strong>Date:</strong> {{ payment.timestamp }}</p>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>No payments have been made yet.</p>
+                    {% endif %}
+                </div>
+            </section>
+        </div>
+
         <div id="settings-content" class="tab-content">
             <section class="settings-section">
                 <h2>Settings</h2>
@@ -150,7 +174,7 @@
         })
         .catch(error => console.error('Error:', error));
 
-        // Show/hide payment amount input based on payment selection
+        // Show/hide payment amount input
         document.addEventListener('DOMContentLoaded', () => {
             switchTab('overview');
             const paymentSelect = document.getElementById('payment_select');

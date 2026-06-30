@@ -1,13 +1,13 @@
 {
     "290961": [
         {
-            "id": "332363",
-            "announcement_id": "439693",
-            "name": "Payment Test",
-            "amount": 50.0,
-            "status": "Outstanding",
-            "due_date": "07-17-2026",
-            "added_on": "2026-06-17 10:58:39"
+            "id": "809835",
+            "announcement_id": "561328",
+            "name": "School Trip",
+            "amount": 25.0,
+            "status": "Paid",
+            "due_date": "07-30-2026",
+            "added_on": "2026-06-30 12:44:29"
         }
     ]
 }
