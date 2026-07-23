@@ -1,16 +1,2 @@
 [
-    {
-        "transaction_id": "953FD606-FEA",
-        "id": "290961",
-        "user_id": "290961",
-        "username": "Parent",
-        "title": "School Trip",
-        "amount": 25.0,
-        "card_holder": "Parent",
-        "card_info": "Card Ending in 1011",
-        "status": "Paid",
-        "fee_id": "809835",
-        "type": "paid",
-        "timestamp": "2026-06-30 12:45:49"
-    }
 ]

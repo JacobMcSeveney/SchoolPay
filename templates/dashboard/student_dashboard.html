@@ -27,8 +27,9 @@
         <h1>Welcome to the Student Dashboard, {{ username }}!</h1>
         <aside class="sidebar">
             <button class="button active" onclick="switchTab('announcements')">Announcements</button>
-            <button class="button" onclick="switchTab('history')">Parents Payment History</button> 
-            <button class="button" onclick="switchTab('settings')">Settings</button> <!--sort out history and settings later-->
+            <button class="button" onclick="switchTab('history')">Parents Payment History</button>
+            <button class="button" onclick="switchTab('notifications')">Notifications{% if unread_count > 0 %} ({{ unread_count }}){% endif %}</button>
+            <button class="button" onclick="switchTab('settings')">Settings</button>
         </aside>
         <div id="announcements-content" class="tab-content active-tab-content">
             <section class="announcement-section">
@@ -67,6 +68,25 @@
                 </div>
             </section>
         </div>
+
+        <div id="notifications-content" class="tab-content">
+            <section class="notifications-tab-content">
+                <h2>All Notifications</h2>
+                {% if notifications %}
+                <button class="mark-all-read-button" onclick="markAllRead()">Mark All as Read</button>
+                    {% for n in notifications %}
+                        <div class="notification-card {% if not n.read %}unread{% endif %}{% if n.type == 'cancelled' %} cancelled{% endif %}" {% if n.type != 'cancelled' %}onclick="markRead('{{ n.id }}')"{% endif %}>
+                            <div class="notif-title">{{ n.title }}</div>
+                            <div class="notif-message">{{ n.message }}</div>
+                            <div class="notif-time">{{ n.timestamp }}</div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="text-align:center;color:#999;">No notifications yet.</p>
+                {% endif %}
+            </section>
+        </div>
+
         <div id="settings-content" class="tab-content">
             <section class="settings-section">
                 <h2>Settings</h2>
@@ -81,7 +101,30 @@
             document.querySelector(`.sidebar button[onclick="switchTab('${tabName}')"]`).classList.add('active');
             document.getElementById(`${tabName}-content`).classList.add('active-tab-content');
         }
-        document.addEventListener('DOMContentLoaded', () => switchTab('announcments')); // Default tab on load
+
+        function markRead(notificationId) {
+            fetch('/mark_notification_read/' + notificationId, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                })
+                .catch(error => console.error('Error marking read:', error));
+        }
+
+        function markAllRead() {
+            fetch('/mark_all_notifications_read', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                })
+                .catch(error => console.error('Error marking all read:', error));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => switchTab('announcements'));
     </script>
     </div>    
 </body>

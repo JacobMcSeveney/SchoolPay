@@ -1,8 +1,7 @@
-from flask import Flask, render_template, request, url_for, redirect
+from flask import Flask, render_template, request, url_for, redirect, jsonify, flash, Response
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user, login_url
 from werkzeug.security import generate_password_hash, check_password_hash
 import json, random, datetime, os, uuid
-from flask import flash
 
 admin_dashboard_data = []
 
@@ -256,6 +255,8 @@ def student_dashboard():
 
     filtered_announcements_for_student = []
     for announcement in announcements:
+        if announcement.get('status') == 'cancelled':
+            continue
         if announcement.get('target_users') in ['students', 'all']:
             filtered_announcements_for_student.append(announcement)
 
@@ -266,12 +267,17 @@ def student_dashboard():
         fee["due_date_obj"] = fee_due_date_obj
         fee["is_overdue"] = fee_due_date_obj < current_date and fee["status"] == "Outstanding" # Only overdue if outstanding
 
+    user_notifications = get_user_notifications(current_user.id)
+    unread_notification_count = get_unread_notification_count(current_user.id)
+
     return render_template("dashboard/student_dashboard.html", 
                            username=current_user.username, 
                            payment_fees=payment_fees, 
                            payment_history=payment_history, 
                            current_date=current_date, 
-                           student_announcements=student_announcements)
+                           student_announcements=student_announcements,
+                           notifications=user_notifications,
+                           unread_count=unread_notification_count)
 
 #Parent dashboard route
 @app.route("/parent_dashboard")
@@ -306,16 +312,26 @@ def parent_dashboard():
     user_id_str = str(current_user.id)
     for save in announcement_payments:
         if str(save.get("user_id")) == user_id_str:
+            payment_type = save.get("type")
+            if payment_type == "free":
+                display_status = "Completed"
+            elif payment_type == "refunded":
+                display_status = "Refunded"
+            else:
+                display_status = "Paid"
             payment_history.append({
                 "description": save.get("title", "Announcement"),
                 "date": save.get("timestamp", ""),
                 "amount": save.get("amount", 0),
-                "status": "Completed" if save.get("type") == "free" else "Paid"
+                "status": display_status
             })
+    payment_history.sort(key=lambda p: p["date"], reverse=True)
 
     # Filter announcements for parents
     filter_parent_announcements = []
     for announcement in announcements:
+        if announcement.get('status') == 'cancelled':
+            continue
         if announcement.get('target_users') in ['parents', 'all']:
             filter_parent_announcements.append(announcement)
 
@@ -331,6 +347,9 @@ def parent_dashboard():
             fee["due_date_obj"] = fee_due_date_obj
             fee["is_overdue"] = fee_due_date_obj < current_date and fee["status"] == "Outstanding" # Only overdue if outstanding
 
+    user_notifications = get_user_notifications(current_user.id)
+    unread_notification_count = get_unread_notification_count(current_user.id)
+
     return render_template("dashboard/parent_dashboard.html", 
                            username=current_user.username, 
                            payment_fees=payment_fees, 
@@ -338,7 +357,9 @@ def parent_dashboard():
                            current_date=current_date, 
                            parent_announcements=parent_announcements, 
                            user_added_fees=user_added_fees, 
-                           user_saved_free=user_saved_free)
+                           user_saved_free=user_saved_free,
+                           notifications=user_notifications,
+                           unread_count=unread_notification_count)
 
 #Admin dashboard route
 @app.route("/admin_dashboard")
@@ -365,10 +386,15 @@ def admin_dashboard():
     # Sort by most recent first
     all_payments.sort(key=lambda p: p["timestamp"], reverse=True)
 
+    user_notifications = get_user_notifications(current_user.id)
+    unread_notification_count = get_unread_notification_count(current_user.id)
+
     return render_template("dashboard/admin_dashboard.html", 
                            username=current_user.username, 
                            announcements=sort_announcements, 
-                           all_payments=all_payments)
+                           all_payments=all_payments,
+                           notifications=user_notifications,
+                           unread_count=unread_notification_count)
 
 announcements_file = "announcements.json"
 user_fees_file = "user_fees.json"
@@ -418,6 +444,99 @@ announcements = load_announcements()
 user_fees = load_user_fees()
 announcement_payments = load_announcement_payments()
 
+# Notifications
+notifications_file = "notifications.json"
+
+def save_notifications(notifications_data):
+    with open(notifications_file, "w") as f:
+        json.dump(notifications_data, f, indent=4)
+
+def load_notifications():
+    if os.path.exists(notifications_file):
+        try:
+            with open(notifications_file, "r") as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            return []
+    return []
+
+notifications_list = load_notifications()
+
+def create_announcement_notifications(announcement, notification_type, exclude_user_id=None):
+    target = announcement.get('target_users', 'all')
+    new_notifications = []
+
+    for user_id, user in users.items():
+        user_id_str = str(user_id)
+        if exclude_user_id and str(exclude_user_id) == user_id_str:
+            continue
+        if target == 'all':
+            pass
+        elif target == 'students' and user.user_type != 'student':
+            continue
+        elif target == 'parents' and user.user_type != 'parent':
+            continue
+        elif target == 'admin' and user.user_type != 'admin':
+            continue
+
+        title = f"{'New Announcement' if notification_type == 'published' else 'Cancelled'}: {announcement['title']}"
+        message = announcement['content'][:200] + ('...' if len(announcement['content']) > 200 else '')
+
+        notification = {
+            "id": str(random.randint(100000, 999999)),
+            "user_id": user_id_str,
+            "announcement_id": announcement.get('id'),
+            "type": notification_type,
+            "title": title,
+            "message": message,
+            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "read": False
+        }
+        new_notifications.append(notification)
+
+    notifications_list.extend(new_notifications)
+    save_notifications(notifications_list)
+    return new_notifications
+
+def get_user_notifications(user_id):
+    user_id_str = str(user_id)
+    user_notifications = [n for n in notifications_list if str(n.get("user_id")) == user_id_str]
+    user_notifications.sort(key=lambda n: n.get('timestamp', ''), reverse=True)
+    return user_notifications
+
+def mark_notification_read(notification_id):
+    for n in notifications_list:
+        if str(n.get("id")) == str(notification_id):
+            n["read"] = True
+            save_notifications(notifications_list)
+            return True
+    return False
+
+@app.route("/mark_notification_read/<notification_id>", methods=["POST"])
+@login_required
+def mark_notification_read(notification_id):
+    # Verify the notification belongs to the current user
+    notification = next((n for n in notifications_list if str(n.get("id")) == str(notification_id)), None)
+    if not notification:
+        return {"error": "Notification not found"}, 404
+    if str(notification.get("user_id")) != str(current_user.id):
+        return {"error": "Unauthorized"}, 403
+    mark_notification_read(notification_id)
+    return {"success": True}
+
+@app.route("/mark_all_notifications_read", methods=["POST"])
+@login_required
+def mark_all_notifications_read():
+    for n in notifications_list:
+        if str(n.get("user_id")) == str(current_user.id):
+            n["read"] = True
+    save_notifications(notifications_list)
+    return {"success": True}
+
+def get_unread_notification_count(user_id):
+    user_id_str = str(user_id)
+    return sum(1 for n in notifications_list if str(n.get("user_id")) == user_id_str and not n.get("read"))
+
 def get_user_fees(user_id):
     return user_fees.get(str(user_id), [])
 
@@ -455,8 +574,9 @@ def make_announcement():
         return render_template("dashboard/admin_dashboard.html", 
                                username=current_user.username, 
                                announcements=announcements, 
-                               announcement_message=announcement_message)
-
+                               announcement_message=announcement_message,
+                               notifications=get_user_notifications(current_user.id),
+                               unread_count=get_unread_notification_count(current_user.id))
 
     if payment_select == "none":
         payment_type = "none"
@@ -485,14 +605,18 @@ def make_announcement():
     announcements.append(new_announcement)
     save_announcements(announcements)
 
+    # Send notification to target users
+    create_announcement_notifications(new_announcement, 'published', exclude_user_id=current_user.id)
+
     sort_announcements = sorted(announcements, key=lambda announcement: datetime.datetime.strptime(announcement['timestamp'], "%Y-%m-%d %H:%M:%S"), reverse=True)
 
     announcement_message = {"text": "Announcement published successfully!", "type": "success"}
     return render_template("dashboard/admin_dashboard.html", 
                            username=current_user.username, 
                            announcements=sort_announcements, 
-                           announcement_message=announcement_message)
-
+                           announcement_message=announcement_message,
+                           notifications=get_user_notifications(current_user.id),
+                           unread_count=get_unread_notification_count(current_user.id))
 
 @app.route("/add_announcement_payment/<announcement_id>", methods=["POST"])
 @login_required
@@ -588,20 +712,60 @@ def delete_user(user_id):
     else:
         return "User not found.", 404
 
-@app.route("/delete_announcement/<string:announcement_id>", methods=["POST"])
+@app.route("/cancel_announcement/<string:announcement_id>", methods=["POST"])
 @login_required
-def delete_announcement(announcement_id):
-    # Ensure only admins can delete announcements
+def cancel_announcement(announcement_id):
     if current_user.user_type != "admin":
-        return "Unauthorized: You must be an administrator to delete announcements.", 403
+        return "Unauthorized", 403
 
     announcement = next((a for a in announcements if a["id"] == announcement_id), None)
-    if announcement:
-        announcements.remove(announcement)
-        save_announcements(announcements)
-        return redirect(url_for("admin_dashboard"))
-    else:
+    if not announcement:
         return "Announcement not found.", 404
+
+    announcement["status"] = "cancelled"
+    save_announcements(announcements)
+
+    # Process refunds for users who already paid for this announcement
+    # Find all paid fee IDs tied to this announcement (before removing fees)
+    for user_id_str, fees in list(user_fees.items()):
+        for fee in fees:
+            if str(fee.get("announcement_id")) == str(announcement_id) and fee.get("status") == "Paid":
+                fee_id = fee.get("id")
+                # Find the original payment record
+                for payment in announcement_payments:
+                    if str(payment.get("fee_id")) == str(fee_id) and payment.get("type") == "paid":
+                        # Create a refund record in payment history
+                        refund_record = {
+                            "transaction_id": str(uuid.uuid4())[:12].upper(),
+                            "id": payment.get("user_id"),
+                            "user_id": payment.get("user_id"),
+                            "username": payment.get("username"),
+                            "title": f"Refund: {payment.get('title', 'Announcement')}",
+                            "amount": payment.get("amount", 0),
+                            "card_holder": payment.get("card_holder", ""),
+                            "card_info": payment.get("card_info", ""),
+                            "status": "Refunded",
+                            "fee_id": payment.get("fee_id"),
+                            "type": "refunded",
+                            "announcement_id": announcement_id,
+                            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        }
+                        announcement_payments.append(refund_record)
+                        break
+    save_announcement_payments(announcement_payments)
+
+    # Remove outstanding fees tied to this announcement
+    for user_id_str, fees in list(user_fees.items()):
+        user_fees[user_id_str] = [fee for fee in fees if str(fee.get("announcement_id")) != str(announcement_id)]
+        if not user_fees[user_id_str]:
+            del user_fees[user_id_str]
+    save_user_fees(user_fees)
+
+    # Notify affected users
+    create_announcement_notifications(announcement, 'cancelled', exclude_user_id=current_user.id)
+
+    flash(f"Announcement '{announcement['title']}' has been cancelled.", "success")
+    return redirect(url_for("admin_dashboard"))
 
 # Get all user data (admin only)
 @app.route("/api/users")
@@ -636,6 +800,13 @@ def user_profile(user_id):
         user_id_str = str(user.id)
         for save in announcement_payments:
             if str(save.get("user_id")) == user_id_str:
+                payment_type = save.get("type")
+                if payment_type == "free":
+                    display_status = "Completed"
+                elif payment_type == "refunded":
+                    display_status = "Refunded"
+                else:
+                    display_status = "Paid"
                 payment_history.append({
                     "transaction_id": save.get("transaction_id", "N/A"),
                     "description": save.get("title", "Payment"),
@@ -643,7 +814,7 @@ def user_profile(user_id):
                     "amount": save.get("amount", 0),
                     "type": save.get("type", "paid"),
                     "card_info": save.get("card_info", ""),
-                    "status": "Completed" if save.get("type") == "free" else "Paid"
+                    "status": display_status
                 })
         # Sort most recent first
         payment_history.sort(key=lambda p: p["date"], reverse=True)

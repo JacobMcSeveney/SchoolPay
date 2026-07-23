@@ -37,5 +37,18 @@
         "gender": "other",
         "user_type": "parent",
         "user_id": 290961
+    },
+    "141686": {
+        "username": "Teacher",
+        "password": "pbkdf2:sha256:1000000$i7uueKQyjYKGRqvN$4dbc4114d23f8498c6893c8f0c47f27847be2f046e617e02ae91bd14e44c3e9a",
+        "email": "teacher@school.nz",
+        "address": "110 westmorland rise",
+        "city": "Tauranga",
+        "zip": "3110",
+        "country": "New Zealand",
+        "dob": "1980-02-05",
+        "gender": "other",
+        "user_type": "admin",
+        "user_id": 141686
     }
 }

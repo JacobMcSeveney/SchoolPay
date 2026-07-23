@@ -29,6 +29,7 @@
             <button class="button active" onclick="switchTab('overview')">User Overview</button>
             <button class="button" onclick="switchTab('announcements')">Announcements</button>
             <button class="button" onclick="switchTab('payments')">All User Payments</button>
+            <button class="button" onclick="switchTab('notifications')">Notifications{% if unread_count > 0 %} ({{ unread_count }}){% endif %}</button>
             <button class="button" onclick="switchTab('settings')">Settings</button>
         </aside>
         <div id="overview-content" class="tab-content active-tab-content">
@@ -89,6 +90,7 @@
                 <div class="announcement-list">
                     {% if announcements %}
                         {% for announcement in announcements %}
+                            {% if announcement.status != 'cancelled' %}
                             <div class="announcement-card">
                                 <h3> {{ announcement.title }} </h3>
                                 <p> {{ announcement.content }} </p>
@@ -104,10 +106,11 @@
                                     {% endif %}
                                 {% endif %} 
                                 <small> Published by {{ announcement.sender }} on {{ announcement.timestamp }} for {{ announcement.target_users }} </small>
-                                <form action="{{ url_for('delete_announcement', announcement_id=announcement.id) }}" method="post" onsubmit="return confirm('Are you sure you want to delete this announcement?');">
-                                    <button type="submit" class="delete-button">Delete</button>
+                                <form action="{{ url_for('cancel_announcement', announcement_id=announcement.id) }}" method="post" onsubmit="return confirm('Cancel this announcement?');">
+                                    <button type="submit" class="cancel-button">Cancel</button>
                                 </form>
                             </div>
+                            {% endif %}
                         {% endfor %}
                     {% else %}
                         <p>No announcements yet.</p>
@@ -139,6 +142,24 @@
             </section>
         </div>
 
+        <div id="notifications-content" class="tab-content">
+            <section class="notifications-tab-content">
+                <h2>All Notifications</h2>
+                {% if notifications %}
+                <button class="mark-all-read-button" onclick="markAllRead()">Mark All as Read</button>
+                    {% for n in notifications %}
+                        <div class="notification-card {% if not n.read %}unread{% endif %}{% if n.type == 'cancelled' %} cancelled{% endif %}" {% if n.type != 'cancelled' %}onclick="markRead('{{ n.id }}')"{% endif %}>
+                            <div class="notif-title">{{ n.title }}</div>
+                            <div class="notif-message">{{ n.message }}</div>
+                            <div class="notif-time">{{ n.timestamp }}</div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="text-align:center;color:#999;">No notifications yet.</p>
+                {% endif %}
+            </section>
+        </div>
+
         <div id="settings-content" class="tab-content">
             <section class="settings-section">
                 <h2>Settings</h2>
@@ -152,6 +173,28 @@
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active-tab-content'));
             document.querySelector(`.sidebar button[onclick="switchTab('${tabName}')"]`).classList.add('active');
             document.getElementById(`${tabName}-content`).classList.add('active-tab-content');
+        }
+
+        function markRead(notificationId) {
+            fetch('/mark_notification_read/' + notificationId, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                })
+                .catch(error => console.error('Error marking read:', error));
+        }
+
+        function markAllRead() {
+            fetch('/mark_all_notifications_read', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                })
+                .catch(error => console.error('Error marking all read:', error));
         }
 
          fetch('/api/users')
