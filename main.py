@@ -251,7 +251,11 @@ def student_dashboard():
         return redirect(url_for('home'))
     current_date = datetime.date.today()
     payment_fees = []
-    payment_history = [] # These will show the parent users payment fees and payment history
+    # Shared with any connected parent accounts to the student accounts
+    payment_history = get_combined_payment_history(current_user.id)
+
+    # Connected accounts
+    user_connections = get_connected_accounts(current_user.id)
 
     filtered_announcements_for_student = []
     for announcement in announcements:
@@ -271,13 +275,16 @@ def student_dashboard():
     unread_notification_count = get_unread_notification_count(current_user.id)
 
     return render_template("dashboard/student_dashboard.html", 
-                           username=current_user.username, 
+                           username=current_user.username,
+                           user_id=current_user.id,
+                           user_type=current_user.user_type, 
                            payment_fees=payment_fees, 
                            payment_history=payment_history, 
                            current_date=current_date, 
                            student_announcements=student_announcements,
                            notifications=user_notifications,
-                           unread_count=unread_notification_count)
+                           unread_count=unread_notification_count,
+                           user_connections=user_connections)
 
 #Parent dashboard route
 @app.route("/parent_dashboard")
@@ -307,25 +314,12 @@ def parent_dashboard():
         fee_entry["is_overdue"] = due_obj < current_date and fee_entry["status"] == "Outstanding"
         payment_fees.append(fee_entry)
 
-    # Payment history
-    payment_history = []
+    # Payment history (shared with connected student accounts)
     user_id_str = str(current_user.id)
-    for save in announcement_payments:
-        if str(save.get("user_id")) == user_id_str:
-            payment_type = save.get("type")
-            if payment_type == "free":
-                display_status = "Completed"
-            elif payment_type == "refunded":
-                display_status = "Refunded"
-            else:
-                display_status = "Paid"
-            payment_history.append({
-                "description": save.get("title", "Announcement"),
-                "date": save.get("timestamp", ""),
-                "amount": save.get("amount", 0),
-                "status": display_status
-            })
-    payment_history.sort(key=lambda p: p["date"], reverse=True)
+    payment_history = get_combined_payment_history(current_user.id)
+
+    # Connected accounts
+    user_connections = get_connected_accounts(current_user.id)
 
     # Filter announcements for parents
     filter_parent_announcements = []
@@ -351,7 +345,9 @@ def parent_dashboard():
     unread_notification_count = get_unread_notification_count(current_user.id)
 
     return render_template("dashboard/parent_dashboard.html", 
-                           username=current_user.username, 
+                           username=current_user.username,
+                           user_id=current_user.id,
+                           user_type=current_user.user_type, 
                            payment_fees=payment_fees, 
                            payment_history=payment_history, 
                            current_date=current_date, 
@@ -359,7 +355,8 @@ def parent_dashboard():
                            user_added_fees=user_added_fees, 
                            user_saved_free=user_saved_free,
                            notifications=user_notifications,
-                           unread_count=unread_notification_count)
+                           unread_count=unread_notification_count,
+                           user_connections=user_connections)
 
 #Admin dashboard route
 @app.route("/admin_dashboard")
@@ -389,12 +386,18 @@ def admin_dashboard():
     user_notifications = get_user_notifications(current_user.id)
     unread_notification_count = get_unread_notification_count(current_user.id)
 
+    # Connected accounts
+    user_connections = get_connected_accounts(current_user.id)
+
     return render_template("dashboard/admin_dashboard.html", 
-                           username=current_user.username, 
+                           username=current_user.username,
+                           user_id=current_user.id,
+                           user_type=current_user.user_type, 
                            announcements=sort_announcements, 
                            all_payments=all_payments,
                            notifications=user_notifications,
-                           unread_count=unread_notification_count)
+                           unread_count=unread_notification_count,
+                           user_connections=user_connections)
 
 announcements_file = "announcements.json"
 user_fees_file = "user_fees.json"
@@ -462,6 +465,81 @@ def load_notifications():
 
 notifications_list = load_notifications()
 
+# Connected accounts
+connected_accounts_file = "connected_accounts.json"
+
+def save_connected_accounts(connections_data):
+    with open(connected_accounts_file, "w") as f:
+        json.dump(connections_data, f, indent=4)
+
+def load_connected_accounts():
+    if os.path.exists(connected_accounts_file):
+        try:
+            with open(connected_accounts_file, "r") as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            return []
+    return []
+
+connected_accounts = load_connected_accounts()
+
+def get_connection_by_id(connection_id):
+    return next((c for c in connected_accounts if str(c.get("id")) == str(connection_id)), None)
+
+def get_other_user(connection, user_id):
+    user_id_str = str(user_id)
+    if str(connection.get("requester_id")) == user_id_str:
+        return connection.get("user_id"), connection.get("recipient_name")
+    return connection.get("requester_id"), connection.get("requester_name")
+
+def get_connected_accounts(user_id):
+    user_id_str = str(user_id)
+    connected = []
+    for connection in connected_accounts:
+        if connection.get("status") != "connected":
+            continue
+        if user_id_str not in (str(connection.get("requester_id")), str(connection.get("user_id"))):
+            continue
+        other_id, other_name = get_other_user(connection, user_id_str)
+        connected.append({
+            "connection_id": connection.get("id"),
+            "user_id": other_id,
+            "name": other_name
+        })
+    return connected
+
+def get_connected_user_ids(user_id):
+    return {str(a["user_id"]) for a in get_connected_accounts(user_id)}
+
+def redirect_to_dashboard():
+    if current_user.user_type == "parent":
+        return redirect(url_for("parent_dashboard"))
+    elif current_user.user_type == "student":
+        return redirect(url_for("student_dashboard"))
+    return redirect(url_for("admin_dashboard"))
+
+def get_combined_payment_history(user_id):
+    ids = {str(user_id)} | get_connected_user_ids(user_id)
+    history = []
+    for save in announcement_payments:
+        if str(save.get("user_id")) in ids:
+            payment_type = save.get("type")
+            if payment_type == "free":
+                display_status = "Completed"
+            elif payment_type == "refunded":
+                display_status = "Refunded"
+            else:
+                display_status = "Paid"
+            history.append({
+                "description": save.get("title", "Announcement"),
+                "date": save.get("timestamp", ""),
+                "amount": save.get("amount", 0),
+                "status": display_status,
+                "paid_by": save.get("username", "")
+            })
+    history.sort(key=lambda p: p["date"], reverse=True)
+    return history
+
 def create_announcement_notifications(announcement, notification_type, exclude_user_id=None):
     target = announcement.get('target_users', 'all')
     new_notifications = []
@@ -504,26 +582,6 @@ def get_user_notifications(user_id):
     user_notifications.sort(key=lambda n: n.get('timestamp', ''), reverse=True)
     return user_notifications
 
-def mark_notification_read(notification_id):
-    for n in notifications_list:
-        if str(n.get("id")) == str(notification_id):
-            n["read"] = True
-            save_notifications(notifications_list)
-            return True
-    return False
-
-@app.route("/mark_notification_read/<notification_id>", methods=["POST"])
-@login_required
-def mark_notification_read(notification_id):
-    # Verify the notification belongs to the current user
-    notification = next((n for n in notifications_list if str(n.get("id")) == str(notification_id)), None)
-    if not notification:
-        return {"error": "Notification not found"}, 404
-    if str(notification.get("user_id")) != str(current_user.id):
-        return {"error": "Unauthorized"}, 403
-    mark_notification_read(notification_id)
-    return {"success": True}
-
 @app.route("/mark_all_notifications_read", methods=["POST"])
 @login_required
 def mark_all_notifications_read():
@@ -532,6 +590,66 @@ def mark_all_notifications_read():
             n["read"] = True
     save_notifications(notifications_list)
     return {"success": True}
+
+#Connected accounts
+@app.route("/connect_account", methods=["POST"])
+@login_required
+def connect_account():
+    user_id = request.form.get("connect_user_id", "").strip()
+
+    if not user_id:
+        flash("Please enter a user ID.", "error")
+        return redirect_to_dashboard()
+
+    if user_id == str(current_user.id):
+        flash("You cannot connect your account to itself.", "error")
+        return redirect_to_dashboard()
+
+    recipient = users.get(user_id)
+    if not recipient:
+        flash("No account was found with that user ID.", "error")
+        return redirect_to_dashboard()
+
+    requester_id = str(current_user.id)
+    user_id = str(recipient.id)
+
+    # Check for an existing connection between the two accounts
+    existing = next((c for c in connected_accounts
+                      if {str(c.get("requester_id")), str(c.get("user_id"))} == {requester_id, user_id}
+                      and c.get("status") == "connected"), None)
+    if existing:
+        flash(f"Your account is already connected to {recipient.username}.", "warning")
+        return redirect_to_dashboard()
+
+    connection = {
+        "id": str(uuid.uuid4())[:12],
+        "requester_id": requester_id,
+        "requester_name": current_user.username,
+        "user_id": user_id,
+        "recipient_name": recipient.username,
+        "status": "connected"
+    }
+    connected_accounts.append(connection)
+    save_connected_accounts(connected_accounts)
+
+    flash(f"Your account is now connected to {recipient.username}.", "success")
+    return redirect_to_dashboard()
+
+# Disconnect accounts
+@app.route("/disconnect_connection/<connection_id>", methods=["POST"])
+@login_required
+def disconnect_connection(connection_id):
+    connection = get_connection_by_id(connection_id)
+    user_id_str = str(current_user.id)
+    if not connection or user_id_str not in (str(connection.get("requester_id")), str(connection.get("user_id"))):
+        flash("Connection not found.", "error")
+        return redirect_to_dashboard()
+
+    connection["status"] = "disconnected"
+    save_connected_accounts(connected_accounts)
+
+    flash("Connection removed.", "success")
+    return redirect_to_dashboard()
 
 def get_unread_notification_count(user_id):
     user_id_str = str(user_id)
@@ -781,7 +899,6 @@ def get_users_api():
             "id": user_obj.id,
             "email": user_obj.email,
             "user_type": user_obj.user_type,
-            # I will add connected accounts to this as well.
         } for user_id, user_obj in users.items()
     }
     return users_data_for_api, 200

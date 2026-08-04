@@ -83,6 +83,9 @@
                                 <p><strong>Date:</strong> {{ transaction.date }}</p>
                                 <p><strong>Amount:</strong> ${{ "%.2f"|format(transaction.amount) }}</p>
                                 <p><strong>Status:</strong> <span class="payment-status-{{ transaction.status.lower() }}">{{ transaction.status }}</span></p>
+                                {% if transaction.paid_by and transaction.paid_by != username %}
+                                    <p><small>Paid by {{ transaction.paid_by }}</small></p>
+                                {% endif %}
                             </div>
                         {% endfor %}
                     {% else %}
@@ -150,8 +153,33 @@
 
         <div id="settings-content" class="tab-content">
             <section class="settings-section">
-                <h2>Settings</h2>
-                <p>Settings content will go here.</p>
+                <h1>Settings</h1>
+                <h3>Account Details</h3>
+                    <p><strong>User ID:</strong> {{ user_id }}</p>
+                    <p><strong>User Type:</strong> {{ user_type | capitalize }}</p>
+                <h3>Connected Accounts</h3>
+                <p>Connect your account to another account to share payment history.</p>
+
+                <form action="{{ url_for('connect_account') }}" method="POST" class="connect-student-form">
+                    <label for="connect_user_id">User ID:</label>
+                    <input type="text" id="connect_user_id" name="connect_user_id" placeholder="e.g. 123456" required>
+                    <button type="submit" class="pay-button">Connect Account</button>
+                </form>
+
+                {% if user_connections %}
+                    <div class="connection-list">
+                        {% for account in user_connections %}
+                            <div class="connection-card connected">
+                                <span><strong>{{ account.name }}</strong> (ID: {{ account.user_id }})</span>
+                                <form action="{{ url_for('disconnect_connection', connection_id=account.connection_id) }}" method="POST" onsubmit="return confirm('Disconnect this account?');">
+                                    <button type="submit" class="pay-button">Disconnect</button>
+                                </form>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No connected accounts yet.</p>
+                {% endif %}
             </section>
         </div>
     </div>
@@ -161,17 +189,6 @@
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active-tab-content'));
             document.querySelector(`.sidebar button[onclick="switchTab('${tabName}')"]`).classList.add('active');
             document.getElementById(`${tabName}-content`).classList.add('active-tab-content');
-        }
-
-        function markRead(notificationId) {
-            fetch('/mark_notification_read/' + notificationId, { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    }
-                })
-                .catch(error => console.error('Error marking read:', error));
         }
 
         function markAllRead() {
