@@ -5,6 +5,10 @@ import json, random, datetime, os, uuid
 
 admin_dashboard_data = []
 
+MIN_ID = 100000
+MAX_ID = 999999
+FEE_DUE_DAYS = 30  # Default number of days until a fee is due
+
 # Initialize Flask app
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "supersecretkey"
@@ -74,6 +78,64 @@ def load_users():
         return {}
 users = load_users()
 
+# Checks if the dob is valid.
+def validate_dob(dob):
+    if not dob:
+        return False, "Date of birth is required."
+
+    try:
+        selected_date = datetime.datetime.strptime(dob, "%Y-%m-%d").date()
+    except ValueError:
+        return False, "Please enter a valid date of birth."
+
+    min_date = datetime.date(1900, 1, 1)
+    max_date = datetime.date.today()
+
+    if selected_date < min_date or selected_date > max_date:
+        return False, f"Date of birth must be between {min_date.strftime('%Y-%m-%d')} and {max_date.strftime('%Y-%m-%d')}."
+
+    return True, ""
+
+# Checks if the email is valid.
+def validate_email(email):
+    if not email:
+        return False, "Email is required."
+    if "@" not in email or "." not in email:
+        return False, "Please enter a valid email address."
+    return True, ""
+
+# Checks if the password is valid.
+def validate_password(password):
+    if not password:
+        return False, "Password is required."
+    if len(password) < 6:
+        return False, "Password must be at least 6 characters long."
+    return True, ""
+
+# Checks if the username is valid.
+def validate_username(username):
+    if not username:
+        return False, "Username is required."
+    if len(username) < 3:
+        return False, "Username must be at least 3 characters long."
+    if any(user.username == username for user in users.values()):
+        return False, "Username already taken."
+    return True, ""
+
+# Checks all the form values.
+def validate_registration_form(data):
+    validators = [
+        validate_username(data.get("username")),
+        validate_password(data.get("password")),
+        validate_email(data.get("email")),
+        validate_dob(data.get("dob"))
+    ]
+
+    for is_valid, error in validators:
+        if not is_valid:
+            return False, error
+    return True, ""
+
 # Load user for Flask-Login
 @login_manager.user_loader
 def load_user(user_id):
@@ -84,59 +146,18 @@ def load_user(user_id):
 def home():
     return render_template("home.html")
 
-# Register route
+# Account register route
 @app.route('/register', methods=["GET", "POST"])
 def register():
-    if request.method == "POST":
-        return redirect(url_for("register"))
-    return render_template("register.html")
+    today = datetime.date.today().strftime("%Y-%m-%d")
 
-# Student register route
-@app.route('/student_register', methods=["GET", "POST"])
-def student_register():
     if request.method == "POST":
         username = request.form.get("username")
-        password = request.form.get("password")
-        email = request.form.get("email")
-        address = request.form.get("address")
-        city = request.form.get("city")
-        zip = request.form.get("zip")
-        country = request.form.get("country")
-        dob = request.form.get("dob")
-        gender = request.form.get("gender")
-        user_type = "student"
         if any(user.username == username for user in users.values()):
-            return render_template("/register/student_register.html", error="Username already taken!")
+            return render_template("register.html", error="Username already taken!", today=today)
 
-        hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
-
-        user_id = random.randint(100000, 999999)
-        if user_id in users:
-            user_id = random.randint(100000, 999999)
-        new_user = Users(username=username, 
-                         password=hashed_password, 
-                         email=email, 
-                         address=address, 
-                         city=city, 
-                         zip=zip, 
-                         country=country, 
-                         dob=dob, 
-                         gender=gender, 
-                         user_type=user_type, 
-                         id=user_id)
-        users[user_id] = new_user
-        save_users(users)
-
-        return redirect(url_for("login"))
-    
-    return render_template("/register/student_register.html")
-
-# Parent register route
-@app.route('/parent_register', methods=["GET", "POST"])
-def parent_register():
-    if request.method == "POST":
-        username = request.form.get("username")
         password = request.form.get("password")
+        hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
         email = request.form.get("email")
         address = request.form.get("address")
         city = request.form.get("city")
@@ -144,67 +165,30 @@ def parent_register():
         country = request.form.get("country")
         dob = request.form.get("dob")
         gender = request.form.get("gender")
-        user_type = "parent"
-        if any(user.username == username for user in users.values()):
-            return render_template("register/parent_register.html", error="Username already taken!")
+        user_type = request.form.get("user_type")
 
-        hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
+        is_valid_dob, dob_error = validate_dob(dob)
+        if not is_valid_dob:
+            return render_template("register.html", error=dob_error, today=today)
 
-        user_id = random.randint(100000, 999999)
+        user_id = random.randint(MIN_ID, MAX_ID)
         if user_id in users:
-            user_id = random.randint(100000, 999999)
-        new_user = Users(username=username, 
-                         password=hashed_password, 
-                         email=email, 
-                         address=address, 
-                         city=city, 
-                         zip=zip, 
-                         country=country, 
-                         dob=dob, 
-                         gender=gender, 
-                         user_type=user_type, 
+            user_id = random.randint(MIN_ID, MAX_ID)
+        new_user = Users(username=username,
+                         password=hashed_password,
+                         email=email,
+                         address=address,
+                         city=city,
+                         zip=zip,
+                         country=country,
+                         dob=dob,
+                         gender=gender,
+                         user_type=user_type,
                          id=user_id)
         users[user_id] = new_user
         save_users(users)
-
         return redirect(url_for("login"))
-    
-    return render_template("register/parent_register.html")
-
-# Admin register route
-@app.route('/admin_register', methods=["GET", "POST"])
-def admin_register():
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-        email = request.form.get("email")
-        address = request.form.get("address")
-        city = request.form.get("city")
-        zip = request.form.get("zip")
-        country = request.form.get("country")
-        dob = request.form.get("dob")
-        gender = request.form.get("gender")
-        user_type = "admin"
-        hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
-        user_id = random.randint(100000, 999999)
-        if user_id in users:
-            user_id = random.randint(100000, 999999)
-        new_user = Users(username=username, 
-                         password=hashed_password, 
-                         email=email, address=address, 
-                         city=city, 
-                         zip=zip, 
-                         country=country, 
-                         dob=dob, 
-                         gender=gender, 
-                         user_type=user_type, 
-                         id=user_id)
-        users[user_id] = new_user
-        save_users(users)
-
-        return redirect(url_for("login"))
-    
-    return render_template("register/admin_register.html")
+    return render_template("register.html", today=today)
 
 # Login route
 @app.route("/login", methods=["GET", "POST"])
@@ -306,7 +290,7 @@ def parent_dashboard():
             "name": fee_data.get("name", "Announcement Fee"),
             "amount": fee_data.get("amount", 0),
             "status": fee_data.get("status", "Outstanding"),
-            "due_date": fee_data.get("due_date", (current_date + datetime.timedelta(days=30)).strftime("%m-%d-%Y")), # Will implement due date into the admin dashboard announcement too
+            "due_date": fee_data.get("due_date", (current_date + datetime.timedelta(days=FEE_DUE_DAYS)).strftime("%m-%d-%Y")),
             "is_announcement_fee": True
         }
         due_obj = datetime.datetime.strptime(fee_entry["due_date"], "%m-%d-%Y").date()
@@ -403,10 +387,12 @@ announcements_file = "announcements.json"
 user_fees_file = "user_fees.json"
 payment_history_file = "payments.json"
 
+# Saves announcements to the file.
 def save_announcements(announcements_data):
     with open(announcements_file, "w") as f:
         json.dump(announcements_data, f, indent=4)
 
+# Loads announcements from the file.
 def load_announcements():
     if os.path.exists(announcements_file):
         try:
@@ -416,10 +402,12 @@ def load_announcements():
             return []
     return []
 
+# Saves user fees to the file.
 def save_user_fees(fees_data):
     with open(user_fees_file, "w") as f:
         json.dump(fees_data, f, indent=4)
 
+# Loads user fees from the file.
 def load_user_fees():
     if os.path.exists(user_fees_file):
         try:
@@ -429,10 +417,12 @@ def load_user_fees():
             return {}
     return {}
 
+# Saves payment history to the file.
 def save_announcement_payments(payments_data):
     with open(payment_history_file, "w") as f:
         json.dump(payments_data, f, indent=4)
 
+# Loads payment history from the file.
 def load_announcement_payments():
     if os.path.exists(payment_history_file):
         try:
@@ -450,10 +440,12 @@ announcement_payments = load_announcement_payments()
 # Notifications
 notifications_file = "notifications.json"
 
+# Saves notifications to the file.
 def save_notifications(notifications_data):
     with open(notifications_file, "w") as f:
         json.dump(notifications_data, f, indent=4)
 
+# Loads notifications from the file.
 def load_notifications():
     if os.path.exists(notifications_file):
         try:
@@ -468,10 +460,12 @@ notifications_list = load_notifications()
 # Connected accounts
 connected_accounts_file = "connected_accounts.json"
 
+# Saves connected accounts to the file.
 def save_connected_accounts(connections_data):
     with open(connected_accounts_file, "w") as f:
         json.dump(connections_data, f, indent=4)
 
+# Loads connected accounts from the file.
 def load_connected_accounts():
     if os.path.exists(connected_accounts_file):
         try:
@@ -483,15 +477,18 @@ def load_connected_accounts():
 
 connected_accounts = load_connected_accounts()
 
+# Finds a connection by its id.
 def get_connection_by_id(connection_id):
     return next((c for c in connected_accounts if str(c.get("id")) == str(connection_id)), None)
 
+# Finds the other user in a connection.
 def get_other_user(connection, user_id):
     user_id_str = str(user_id)
     if str(connection.get("requester_id")) == user_id_str:
         return connection.get("user_id"), connection.get("recipient_name")
     return connection.get("requester_id"), connection.get("requester_name")
 
+# Gets all connected accounts for a user.
 def get_connected_accounts(user_id):
     user_id_str = str(user_id)
     connected = []
@@ -508,9 +505,11 @@ def get_connected_accounts(user_id):
         })
     return connected
 
+# Gets the ids of connected users.
 def get_connected_user_ids(user_id):
     return {str(a["user_id"]) for a in get_connected_accounts(user_id)}
 
+# Sends the user to the right dashboard.
 def redirect_to_dashboard():
     if current_user.user_type == "parent":
         return redirect(url_for("parent_dashboard"))
@@ -518,6 +517,7 @@ def redirect_to_dashboard():
         return redirect(url_for("student_dashboard"))
     return redirect(url_for("admin_dashboard"))
 
+# Gets payment history for a user and their connections.
 def get_combined_payment_history(user_id):
     ids = {str(user_id)} | get_connected_user_ids(user_id)
     history = []
@@ -540,6 +540,7 @@ def get_combined_payment_history(user_id):
     history.sort(key=lambda p: p["date"], reverse=True)
     return history
 
+# Creates notifications for an announcement.
 def create_announcement_notifications(announcement, notification_type, exclude_user_id=None):
     target = announcement.get('target_users', 'all')
     new_notifications = []
@@ -561,7 +562,7 @@ def create_announcement_notifications(announcement, notification_type, exclude_u
         message = announcement['content'][:200] + ('...' if len(announcement['content']) > 200 else '')
 
         notification = {
-            "id": str(random.randint(100000, 999999)),
+            "id": str(random.randint(MIN_ID, MAX_ID)),
             "user_id": user_id_str,
             "announcement_id": announcement.get('id'),
             "type": notification_type,
@@ -576,6 +577,7 @@ def create_announcement_notifications(announcement, notification_type, exclude_u
     save_notifications(notifications_list)
     return new_notifications
 
+# Gets notifications for a user.
 def get_user_notifications(user_id):
     user_id_str = str(user_id)
     user_notifications = [n for n in notifications_list if str(n.get("user_id")) == user_id_str]
@@ -651,13 +653,16 @@ def disconnect_connection(connection_id):
     flash("Connection removed.", "success")
     return redirect_to_dashboard()
 
+# Counts unread notifications for a user.
 def get_unread_notification_count(user_id):
     user_id_str = str(user_id)
     return sum(1 for n in notifications_list if str(n.get("user_id")) == user_id_str and not n.get("read"))
 
+# Gets fees for a user.
 def get_user_fees(user_id):
     return user_fees.get(str(user_id), [])
 
+# Adds a fee to a user.
 def add_user_fee(user_id, fee_data):
     user_id_str = str(user_id)
     if user_id_str not in user_fees:
@@ -665,6 +670,7 @@ def add_user_fee(user_id, fee_data):
     user_fees[user_id_str].append(fee_data)
     save_user_fees(user_fees)
 
+# Marks a fee as paid.
 def mark_user_fee_paid(user_id, fee_id):
     user_id_str = str(user_id)
     if user_id_str in user_fees:
@@ -710,7 +716,7 @@ def make_announcement():
             payment_amount_value = 0.0
 
     new_announcement = {
-        "id": str(random.randint(100000, 999999)),
+        "id": str(random.randint(MIN_ID, MAX_ID)),
         "title": title,
         "content": content,
         "payment_type": payment_type,
@@ -760,14 +766,14 @@ def add_announcement_payment(announcement_id):
             return redirect(url_for("parent_dashboard"))
 
     # Add as a pending payment
-    fee_id = str(random.randint(100000, 999999))
+    fee_id = str(random.randint(MIN_ID, MAX_ID))
     new_fee = {
         "id": fee_id,
         "announcement_id": announcement_id,
         "name": announcement["title"],
         "amount": announcement.get("payment_amount", 0),
         "status": "Outstanding",
-        "due_date": (datetime.date.today() + datetime.timedelta(days=30)).strftime("%m-%d-%Y"),
+        "due_date": (datetime.date.today() + datetime.timedelta(days=FEE_DUE_DAYS)).strftime("%m-%d-%Y"),
         "added_on": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
     add_user_fee(current_user.id, new_fee)
@@ -797,7 +803,7 @@ def free_announcement_payment(announcement_id):
 
     # Save free announcements in history
     save = {
-        "id": str(random.randint(100000, 999999)),
+        "id": str(random.randint(MIN_ID, MAX_ID)),
         "announcement_id": announcement_id,
         "user_id": str(current_user.id),
         "username": current_user.username,

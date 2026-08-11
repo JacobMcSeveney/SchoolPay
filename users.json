@@ -1,17 +1,4 @@
 {
-    "admin": {
-        "username": "admin",
-        "password": "pbkdf2:sha256:1000000$HuJdmZE0QtlCA8at$1c562dc3f989f5c2a8740fd66d193d21805c11ee8df870ab6e266e812c649230",
-        "email": "fakeemail@gmail.com",
-        "address": "111 Random Street",
-        "city": "City",
-        "zip": "Zip",
-        "country": "New Zealand",
-        "dob": "2000-01-01",
-        "gender": "non-binary",
-        "user_type": "admin",
-        "user_id": "admin"
-    },
     "655834": {
         "username": "Student",
         "password": "pbkdf2:sha256:1000000$pkIYWkbHvWlpVSAK$fa97d3d81cb2d983ce2ffb06ce1f8aa8e1dd932cb6195b8ab315b6d0e5a2e4af",
@@ -50,5 +37,18 @@
         "gender": "other",
         "user_type": "admin",
         "user_id": 141686
+    },
+    "860487": {
+        "username": "Parent 2",
+        "password": "pbkdf2:sha256:1000000$fXYqsh22bRmmj5ee$e2e91256f111e90d4e93c3eae511a6258688898fc41315967d25af9941bc7e52",
+        "email": "Parent@gmail.com",
+        "address": "110 schoolroad",
+        "city": "Katikati",
+        "zip": "1092",
+        "country": "Australia",
+        "dob": "3000-03-03",
+        "gender": "other",
+        "user_type": "parent",
+        "user_id": 860487
     }
 }

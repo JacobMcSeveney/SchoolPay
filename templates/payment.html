@@ -29,7 +29,7 @@
 
             <h2>Payment Details</h2>
             <label for="id">Student/Account ID:</label>
-            <input type="text" id="id" name="id" placeholder="e.g. Student username or ID" value="{{ prefill_data.id }}" />
+            <input type="text" id="id" name="id" placeholder="e.g. Username or ID" value="{{ prefill_data.id }}" />
 
             <label for="amount">Amount to Pay:</label>
             <input type="number" id="amount" name="amount" value="{{ '%.2f'|format(prefill_data.amount) if prefill_data.amount else '' }}" required />
@@ -41,7 +41,7 @@
             <label for="card_holder_name">Card Holder Name:</label>
             <input type="text" id="card_holder_name" name="card_holder_name" required />
             <label for="card_number">Card Number:</label>
-            <input type="text" id="card_number" name="card_number" pattern="[0-9]{13,16}" title="13-16 digits" required />
+            <input type="text" id="card_number" name="card_number" pattern="[0-9]{13,16}" title="13-16 digits (no spaces)" required />
 
             <div class="form-row">
                 <div class="form-group">
@@ -65,7 +65,7 @@
             </div>
             
             <label for="cvv">CVV:</label>
-            <input type="text" id="cvv" name="cvv" pattern="[0-9]{3,4}" title="3 or 4 digits" required />
+            <input type="text" id="cvv" name="cvv" pattern="[0-9]{3,4}" title="3 or 4 digits (no spaces)" required />
 
             <button type="submit">Complete Payment</button>
         </form>
