@@ -31,12 +31,12 @@ class Users(UserMixin):
         self.dob = dob
         self.gender = gender
         self.user_type = user_type
-        self.id = id
+        self.id = str(id)
 
 # Save users using JSON file
 def save_users(users):
     data = {
-        user.id: {
+        str(user.id): {
             "username": user.username,
             "password": user.password,
             "email": user.email,
@@ -47,7 +47,7 @@ def save_users(users):
             "dob": user.dob,
             "gender": user.gender,
             "user_type": user.user_type,
-            "user_id": user.id
+            "user_id": str(user.id)
         } for user in users.values()
     }
     with open("users.json", "w") as f:
@@ -59,7 +59,7 @@ def load_users():
         with open("users.json", "r") as f:
             data = json.load(f)
             users = {
-                id: Users(
+                str(id): Users(
                     user["username"], 
                     user["password"], 
                     user.get("email"), 
@@ -70,7 +70,7 @@ def load_users():
                     user.get("dob"), 
                     user.get("gender"), 
                     user.get("user_type"),
-                    user.get("user_id"),
+                    user.get("user_id", id),
                 ) for id, user in data.items()
             }
             return users
@@ -139,7 +139,7 @@ def validate_registration_form(data):
 # Load user for Flask-Login
 @login_manager.user_loader
 def load_user(user_id):
-    return users.get(user_id)
+    return users.get(str(user_id))
 
 # Home route
 @app.route("/")
@@ -157,6 +157,9 @@ def register():
             return render_template("register.html", error="Username already taken!", today=today)
 
         password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+        if password != confirm_password:
+            return render_template("register.html", error="Passwords do not match!", today=today)
         hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
         email = request.form.get("email")
         address = request.form.get("address")
@@ -171,9 +174,10 @@ def register():
         if not is_valid_dob:
             return render_template("register.html", error=dob_error, today=today)
 
-        user_id = random.randint(MIN_ID, MAX_ID)
-        if user_id in users:
-            user_id = random.randint(MIN_ID, MAX_ID)
+        while True:
+            user_id = str(random.randint(MIN_ID, MAX_ID))
+            if user_id not in users:
+                break
         new_user = Users(username=username,
                          password=hashed_password,
                          email=email,
@@ -266,7 +270,7 @@ def student_dashboard():
                            payment_history=payment_history, 
                            current_date=current_date, 
                            student_announcements=student_announcements,
-                           notifications=user_notifications,
+                           notifications=user_notifications,``
                            unread_count=unread_notification_count,
                            user_connections=user_connections)
 
@@ -607,7 +611,7 @@ def connect_account():
         flash("You cannot connect your account to itself.", "error")
         return redirect_to_dashboard()
 
-    recipient = users.get(user_id)
+    recipient = users.get(str(user_id))
     if not recipient:
         flash("No account was found with that user ID.", "error")
         return redirect_to_dashboard()
@@ -824,12 +828,14 @@ def delete_user(user_id):
     if current_user.user_type != "admin":
         return "Unauthorized: You must be an administrator to delete users.", 403
 
+    user_id = str(user_id)
+
     # Prevent an admin from deleting themselves
-    if current_user.id == user_id:
+    if current_user.id == str(user_id):
         return "Error: You cannot delete your own account while logged in.", 400
 
-    if user_id in users:
-        del users[user_id]
+    if str(user_id) in users:
+        del users[str(user_id)]
         save_users(users)
         # Redirect back to the admin dashboard
         return redirect(url_for("admin_dashboard"))
@@ -913,7 +919,7 @@ def get_users_api():
 @login_required
 def user_profile(user_id):
     user_id = user_id.replace(" ", "_")
-    user = users.get(user_id)
+    user = users.get(str(user_id))
     if not user:
         return "User not found", 404
     
@@ -982,15 +988,38 @@ def payment(fee_id):
 @app.route('/make_payment', methods=['POST'])
 @login_required
 def make_payment():
-    id = request.form.get('id')
-    amount = float(request.form.get('amount'))
-    card_name = request.form.get('card_holder_name')
-    card_number = request.form.get('card_number')
-    fee_id = request.form.get('fee_id')
-    fee_name = request.form.get('fee_name', 'Payment')
-
     try:
+        id = request.form.get('id')
+        amount_str = request.form.get('amount')
+        card_name = request.form.get('card_holder_name')
+        card_number = (request.form.get('card_number') or '').strip()
+        fee_id = request.form.get('fee_id')
+        fee_name = request.form.get('fee_name', 'Payment')
         transaction_id = str(uuid.uuid4())[:12].upper()
+
+        # Validate amount (handle missing or non number values)
+        try:
+            amount = float(amount_str)
+        except (TypeError, ValueError):
+            prefill_data = {
+                "id": id,
+                "amount": amount_str,
+                "card_holder_name": card_name,
+                "fee_id": fee_id,
+                "fee_name": fee_name
+            }
+            return render_template('payment.html', error="Invalid payment amount.", prefill_data=prefill_data)
+
+        # Validate card number length before slicing
+        if not card_number or len(card_number) < 4 or not card_number.isdigit():
+            prefill_data = {
+                "id": id,
+                "amount": amount_str,
+                "card_holder_name": card_name,
+                "fee_id": fee_id,
+                "fee_name": fee_name
+            }
+            return render_template('payment.html', error="Invalid card number.", prefill_data=prefill_data)
 
         card_preview = f"Card Ending in {card_number[-4:]}"
         
