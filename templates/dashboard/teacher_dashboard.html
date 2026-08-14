@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
+    <title>teacher Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -24,7 +24,7 @@
         </div>
         </nav>
         <div class="dashboard-content">
-        <h1>Welcome to the Admin Dashboard!</h1>
+        <h1>Welcome to the teacher Dashboard!</h1>
         <aside class="sidebar">
             <button class="button active" onclick="switchTab('overview')">User Overview</button>
             <button class="button" onclick="switchTab('announcements')">Announcements</button>
@@ -48,7 +48,7 @@
         <div id="announcements-content" class="tab-content">
             <section class="announcements-section">
                 <h2>Make New Announcement</h2>
-                <form action="/admin/make_announcement" method="POST" class="announcement-form">
+                <form action="/teacher/make_announcement" method="POST" class="announcement-form">
                     <label for="announcement_title">Title:</label>
                     <br>
                     <input type="text" id="announcement_title" name="announcement_title" required>
@@ -76,7 +76,6 @@
                         <option value="all">All Users</option>
                         <option value="students">Students</option>
                         <option value="parents">Parents</option>
-                        <option value="admin">Administrators</option>
                     </select>
                     <br><br><br>
                     <button type="submit">Publish Announcement</button>
@@ -148,10 +147,17 @@
                 {% if notifications %}
                 <button class="mark-all-read-button" onclick="markAllRead()">Mark All as Read</button>
                     {% for n in notifications %}
-                        <div class="notification-card {% if not n.read %}unread{% endif %}{% if n.type == 'cancelled' %} cancelled{% endif %}" {% if n.type != 'cancelled' %}onclick="markRead('{{ n.id }}')"{% endif %}>
+                        <div class="notification-card {% if not n.read %}unread{% endif %}{% if n.type == 'cancelled' %} cancelled{% endif %}">
                             <div class="notif-title">{{ n.title }}</div>
                             <div class="notif-message">{{ n.message }}</div>
                             <div class="notif-time">{{ n.timestamp }}</div>
+                            {% if n.type != 'cancelled' %}
+                                {% if n.read %}
+                                    <button type="button" class="mark-read-button read" disabled>Read</button>
+                                {% else %}
+                                    <button type="button" class="mark-read-button" onclick="markNotificationRead('{{ n.id }}')">Mark as Read</button>
+                                {% endif %}
+                            {% endif %}
                         </div>
                     {% endfor %}
                 {% else %}
@@ -209,6 +215,17 @@
                     }
                 })
                 .catch(error => console.error('Error marking all read:', error));
+        }
+
+        function markNotificationRead(notificationId) {
+            fetch(`/mark_notification_read/${encodeURIComponent(notificationId)}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                })
+                .catch(error => console.error('Error marking notification read:', error));
         }
 
          fetch('/api/users')

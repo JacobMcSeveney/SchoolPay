@@ -3,7 +3,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from werkzeug.security import generate_password_hash, check_password_hash
 import json, random, datetime, os, uuid
 
-admin_dashboard_data = []
+teacher_dashboard_data = []
 
 MIN_ID = 100000
 MAX_ID = 999999
@@ -234,7 +234,7 @@ def logout():
 @app.route("/student_dashboard")
 @login_required
 def student_dashboard():
-    if current_user.user_type not in ['student', 'admin']: # Will add a 'parent_of_student' here later
+    if current_user.user_type not in ['student', 'teacher']: # Will add a 'parent_of_student' here later
         flash("Access denied. You are not a student or a parent of this student.", "error")
         return redirect(url_for('home'))
     current_date = datetime.date.today()
@@ -270,7 +270,7 @@ def student_dashboard():
                            payment_history=payment_history, 
                            current_date=current_date, 
                            student_announcements=student_announcements,
-                           notifications=user_notifications,``
+                           notifications=user_notifications,
                            unread_count=unread_notification_count,
                            user_connections=user_connections)
 
@@ -278,7 +278,7 @@ def student_dashboard():
 @app.route("/parent_dashboard")
 @login_required
 def parent_dashboard():
-    if current_user.user_type not in ['parent', 'admin']:
+    if current_user.user_type not in ['parent', 'teacher']:
         flash("Access denied. You are not a parent.", "error")
         return redirect(url_for('home'))
     current_date = datetime.date.today()
@@ -346,10 +346,14 @@ def parent_dashboard():
                            unread_count=unread_notification_count,
                            user_connections=user_connections)
 
-#Admin dashboard route
-@app.route("/admin_dashboard")
+#teacher dashboard route
+@app.route("/teacher_dashboard")
 @login_required
-def admin_dashboard():
+def teacher_dashboard():
+    if current_user.user_type != "teacher":
+        flash("Access denied. You are not a teacher.", "error")
+        return redirect(url_for('home'))
+
     sort_announcements = sorted(announcements, key=lambda announcement: datetime.datetime.strptime(announcement['timestamp'], "%Y-%m-%d %H:%M:%S"), reverse=True)
     
     # Payment history
@@ -377,7 +381,7 @@ def admin_dashboard():
     # Connected accounts
     user_connections = get_connected_accounts(current_user.id)
 
-    return render_template("dashboard/admin_dashboard.html", 
+    return render_template("dashboard/teacher_dashboard.html", 
                            username=current_user.username,
                            user_id=current_user.id,
                            user_type=current_user.user_type, 
@@ -514,12 +518,18 @@ def get_connected_user_ids(user_id):
     return {str(a["user_id"]) for a in get_connected_accounts(user_id)}
 
 # Sends the user to the right dashboard.
-def redirect_to_dashboard():
+def get_user_dashboard_route():
     if current_user.user_type == "parent":
-        return redirect(url_for("parent_dashboard"))
+        return "parent_dashboard"
     elif current_user.user_type == "student":
-        return redirect(url_for("student_dashboard"))
-    return redirect(url_for("admin_dashboard"))
+        return "student_dashboard"
+    elif current_user.user_type == "teacher":
+        return "teacher_dashboard"
+    return "home"
+
+
+def redirect_to_dashboard():
+    return redirect(url_for(get_user_dashboard_route()))
 
 # Gets payment history for a user and their connections.
 def get_combined_payment_history(user_id):
@@ -559,7 +569,7 @@ def create_announcement_notifications(announcement, notification_type, exclude_u
             continue
         elif target == 'parents' and user.user_type != 'parent':
             continue
-        elif target == 'admin' and user.user_type != 'admin':
+        elif target == 'teacher' and user.user_type != 'teacher':
             continue
 
         title = f"{'New Announcement' if notification_type == 'published' else 'Cancelled'}: {announcement['title']}"
@@ -596,6 +606,22 @@ def mark_all_notifications_read():
             n["read"] = True
     save_notifications(notifications_list)
     return {"success": True}
+
+@app.route("/mark_notification_read/<notification_id>", methods=["POST"])
+@login_required
+def mark_notification_read(notification_id):
+    notification = next((
+        n for n in notifications_list
+        if str(n.get("id")) == str(notification_id)
+        and str(n.get("user_id")) == str(current_user.id)
+    ), None)
+
+    if not notification:
+        return jsonify({"success": False, "message": "Notification not found."}), 404
+
+    notification["read"] = True
+    save_notifications(notifications_list)
+    return jsonify({"success": True})
 
 #Connected accounts
 @app.route("/connect_account", methods=["POST"])
@@ -684,12 +710,12 @@ def mark_user_fee_paid(user_id, fee_id):
                 break
         save_user_fees(user_fees)
 
-# Route for making announcements (admin only)
-@app.route("/admin/make_announcement", methods=["POST"])
+# Route for making announcements (teacher only)
+@app.route("/teacher/make_announcement", methods=["POST"])
 @login_required
 def make_announcement():
-    if current_user.user_type != "admin":
-        return "Unauthorized: Only administrators can make announcements.", 403
+    if current_user.user_type != "teacher":
+        return "Unauthorized: Only teachers can make announcements.", 403
 
     title = request.form.get("announcement_title")
     content = request.form.get("announcement_content")
@@ -699,7 +725,7 @@ def make_announcement():
 
     if not all([title, content, payment_select, target_users]):
         announcement_message = {"text": "All fields are required!", "type": "error"}
-        return render_template("dashboard/admin_dashboard.html", 
+        return render_template("dashboard/teacher_dashboard.html", 
                                username=current_user.username, 
                                announcements=announcements, 
                                announcement_message=announcement_message,
@@ -739,7 +765,7 @@ def make_announcement():
     sort_announcements = sorted(announcements, key=lambda announcement: datetime.datetime.strptime(announcement['timestamp'], "%Y-%m-%d %H:%M:%S"), reverse=True)
 
     announcement_message = {"text": "Announcement published successfully!", "type": "success"}
-    return render_template("dashboard/admin_dashboard.html", 
+    return render_template("dashboard/teacher_dashboard.html", 
                            username=current_user.username, 
                            announcements=sort_announcements, 
                            announcement_message=announcement_message,
@@ -749,7 +775,7 @@ def make_announcement():
 @app.route("/add_announcement_payment/<announcement_id>", methods=["POST"])
 @login_required
 def add_announcement_payment(announcement_id):
-    if current_user.user_type not in ['parent', 'admin']:
+    if current_user.user_type not in ['parent', 'teacher']:
         return "Unauthorized", 403
 
     # Find the announcement
@@ -787,7 +813,7 @@ def add_announcement_payment(announcement_id):
 @app.route("/free_announcement_payment/<announcement_id>", methods=["POST"])
 @login_required
 def free_announcement_payment(announcement_id):
-    if current_user.user_type not in ['parent', 'admin']:
+    if current_user.user_type not in ['parent', 'teacher']:
         return "Unauthorized", 403
 
     announcement = next((a for a in announcements if a["id"] == announcement_id), None)
@@ -824,28 +850,28 @@ def free_announcement_payment(announcement_id):
 @app.route("/delete_user/<string:user_id>", methods=["POST"])
 @login_required
 def delete_user(user_id):
-    # Ensure only admins can delete users
-    if current_user.user_type != "admin":
-        return "Unauthorized: You must be an administrator to delete users.", 403
+    # Ensure only teachers can delete users
+    if current_user.user_type != "teacher":
+        return "Unauthorized: You must be a teacher to delete users.", 403
 
     user_id = str(user_id)
 
-    # Prevent an admin from deleting themselves
+    # Prevent an teacher from deleting themselves
     if current_user.id == str(user_id):
         return "Error: You cannot delete your own account while logged in.", 400
 
     if str(user_id) in users:
         del users[str(user_id)]
         save_users(users)
-        # Redirect back to the admin dashboard
-        return redirect(url_for("admin_dashboard"))
+        # Redirect back to the teacher dashboard
+        return redirect(url_for("teacher_dashboard"))
     else:
         return "User not found.", 404
 
 @app.route("/cancel_announcement/<string:announcement_id>", methods=["POST"])
 @login_required
 def cancel_announcement(announcement_id):
-    if current_user.user_type != "admin":
+    if current_user.user_type != "teacher":
         return "Unauthorized", 403
 
     announcement = next((a for a in announcements if a["id"] == announcement_id), None)
@@ -895,15 +921,15 @@ def cancel_announcement(announcement_id):
     create_announcement_notifications(announcement, 'cancelled', exclude_user_id=current_user.id)
 
     flash(f"Announcement '{announcement['title']}' has been cancelled.", "success")
-    return redirect(url_for("admin_dashboard"))
+    return redirect(url_for("teacher_dashboard"))
 
-# Get all user data (admin only)
+# Get all user data (teacher only)
 @app.route("/api/users")
 @login_required
 def get_users_api():
-    # Admin users only
-    if current_user.user_type != "admin":
-        return {"error": "Unauthorized access. Only admins can view this information."}, 403
+    # teacher users only
+    if current_user.user_type != "teacher":
+        return {"error": "Unauthorized access. Only teachers can view this information."}, 403
 
     users_data_for_api = {
         user_id: {
@@ -923,9 +949,9 @@ def user_profile(user_id):
     if not user:
         return "User not found", 404
     
-    # Payment history per-user (visible to admins)
+    # Payment history per-user (visible to teachers)
     payment_history = []
-    if current_user.user_type == 'admin':
+    if current_user.user_type == 'teacher':
         user_id_str = str(user.id)
         for save in announcement_payments:
             if str(save.get("user_id")) == user_id_str:
@@ -983,7 +1009,7 @@ def payment(fee_id):
                 "fee_id": fee_id
             }
 
-    return render_template("payment.html", prefill_data=prefill_data)
+    return render_template("payment.html", prefill_data=prefill_data, dashboard_route=get_user_dashboard_route())
 
 @app.route('/make_payment', methods=['POST'])
 @login_required
@@ -1008,7 +1034,7 @@ def make_payment():
                 "fee_id": fee_id,
                 "fee_name": fee_name
             }
-            return render_template('payment.html', error="Invalid payment amount.", prefill_data=prefill_data)
+            return render_template('payment.html', error="Invalid payment amount.", prefill_data=prefill_data, dashboard_route=get_user_dashboard_route())
 
         # Validate card number length before slicing
         if not card_number or len(card_number) < 4 or not card_number.isdigit():
@@ -1019,7 +1045,7 @@ def make_payment():
                 "fee_id": fee_id,
                 "fee_name": fee_name
             }
-            return render_template('payment.html', error="Invalid card number.", prefill_data=prefill_data)
+            return render_template('payment.html', error="Invalid card number.", prefill_data=prefill_data, dashboard_route=get_user_dashboard_route())
 
         card_preview = f"Card Ending in {card_number[-4:]}"
         
@@ -1042,7 +1068,7 @@ def make_payment():
         if fee_id:
             mark_user_fee_paid(current_user.id, fee_id)
 
-        admin_dashboard_data.append(payment_record)
+        teacher_dashboard_data.append(payment_record)
         announcement_payments.append(payment_record)
         save_announcement_payments(announcement_payments)
 
@@ -1055,11 +1081,12 @@ def make_payment():
             status="Paid", 
             timestamp=payment_record['timestamp'], 
             transaction_id=transaction_id,
-            fee_name=fee_name
+            fee_name=fee_name,
+            dashboard_route=get_user_dashboard_route()
         )
 
     except Exception as e:
-        return render_template('payment.html', error="Payment failed. Please try again.", prefill_data={})
+        return render_template('payment.html', error="Payment failed. Please try again.", prefill_data={}, dashboard_route=get_user_dashboard_route())
 
 if __name__ == "__main__":
    app.run(debug=True, port=8001)

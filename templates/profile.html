@@ -29,7 +29,7 @@
     <div class="container profile-container">
         <h1>{{ user.username }}'s Profile</h1>
         <aside class="sidebar">
-            {% if current_user.is_authenticated and current_user.user_type == 'admin' %}
+            {% if current_user.is_authenticated and current_user.user_type == 'teacher' %}
                 <button class="button active" onclick="switchTab('overview')">Overview</button>
                 <button class="button" onclick="switchTab('history')">Payment History</button>
             {% endif %}
@@ -45,7 +45,7 @@
                 <p><strong>Country:</strong> {{ user.country }}</p>
                 <p><strong>Date of Birth:</strong> {{ user.dob }}</p>
                 <p><strong>Gender:</strong> {{ user.gender | capitalize }}</p>
-                <a href="{{ url_for('admin_dashboard') }}" class="profile-button">Back to Admin Dashboard</a>
+                <a href="{{ url_for('teacher_dashboard') }}" class="profile-button">Back to Teacher Dashboard</a>
                 {% if current_user.id != user.id %}
                     <form action="{{ url_for('delete_user', user_id=user.id) }}" method="post" onsubmit="return confirm('Are you sure you want to delete {{ user.username }}?');">
                         <button type="submit" class="delete-button">Delete User</button>

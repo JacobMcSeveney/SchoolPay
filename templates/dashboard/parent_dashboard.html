@@ -139,10 +139,17 @@
                 {% if notifications %}
                 <button class="mark-all-read-button" onclick="markAllRead()">Mark All as Read</button>
                     {% for n in notifications %}
-                        <div class="notification-card {% if not n.read %}unread{% endif %}{% if n.type == 'cancelled' %} cancelled{% endif %}" {% if n.type != 'cancelled' %}onclick="markRead('{{ n.id }}')"{% endif %}>
+                        <div class="notification-card {% if not n.read %}unread{% endif %}{% if n.type == 'cancelled' %} cancelled{% endif %}">
                             <div class="notif-title">{{ n.title }}</div>
                             <div class="notif-message">{{ n.message }}</div>
                             <div class="notif-time">{{ n.timestamp }}</div>
+                            {% if n.type != 'cancelled' %}
+                                {% if n.read %}
+                                    <button type="button" class="mark-read-button read" disabled>Read</button>
+                                {% else %}
+                                    <button type="button" class="mark-read-button" onclick="markNotificationRead('{{ n.id }}')">Mark as Read</button>
+                                {% endif %}
+                            {% endif %}
                         </div>
                     {% endfor %}
                 {% else %}
@@ -200,6 +207,17 @@
                     }
                 })
                 .catch(error => console.error('Error marking all read:', error));
+        }
+
+        function markNotificationRead(notificationId) {
+            fetch(`/mark_notification_read/${encodeURIComponent(notificationId)}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                })
+                .catch(error => console.error('Error marking notification read:', error));
         }
 
         document.addEventListener('DOMContentLoaded', () => switchTab('overview'));
