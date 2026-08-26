@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>teacher Dashboard</title>
+    <title>Teacher Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -12,19 +12,21 @@
             <li><a href="/">Home</a></li>
         </ul>
         <div class="account">
-            <ul>
-                {% if current_user.is_authenticated %}
+            {% if current_user.is_authenticated %}
+                <ul>
                     <li><a href="{{ url_for('logout') }}">Logout</a></li>
                     <li><a href="{{ url_for('user_profile', user_id=current_user.id) }}">My Profile | {{ current_user.username }}</a></li>
-                {% else %}
+                </ul>
+            {% else %}
+                <ul>
                     <li><a href="{{ url_for('login') }}">Login</a></li>
                     <li><a href="{{ url_for('register') }}">Register</a></li>
-                {% endif %}
-            </ul>
+                </ul>
+            {% endif %}
         </div>
-        </nav>
+    </nav>
         <div class="dashboard-content">
-        <h1>Welcome to the teacher Dashboard!</h1>
+        <h1>Welcome to the Teacher Dashboard!</h1>
         <aside class="sidebar">
             <button class="button active" onclick="switchTab('overview')">User Overview</button>
             <button class="button" onclick="switchTab('announcements')">Announcements</button>
@@ -81,9 +83,15 @@
                     <button type="submit">Publish Announcement</button>
                 </form>
         
-                {% if announcement_message %}
-                    <p class="{{ announcement_message.type }}">{{ announcement_message.text }}</p>
-                {% endif %}
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flash-messages">
+                            {% for category, message in messages %}
+                                <div class="flash-message {{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
 
                 <h2 style="margin-top: 40px;">Existing Announcements</h2>
                 <div class="announcement-list">
@@ -198,6 +206,9 @@
             </section>
         </div>
     </div>
+    <footer>
+        <p style="text-align: center; margin-top: 20px;">&copy; 2026 SchoolPay. <a href="/about">Learn More</a> <a href="/contact">Contact Us</a></p>
+    </footer>
     <script>
         function switchTab(tabName) {
             document.querySelectorAll('.sidebar button').forEach(btn => btn.classList.remove('active'));
@@ -253,7 +264,8 @@
 
         // Show/hide payment amount input
         document.addEventListener('DOMContentLoaded', () => {
-            switchTab('overview');
+            const hasFlashMessage = document.querySelector('.announcements-section .flash-messages');
+            switchTab(hasFlashMessage ? 'announcements' : 'overview');
             const paymentSelect = document.getElementById('payment_select');
             const payAmountContainer = document.getElementById('pay-amount-container');
             if (paymentSelect) {
@@ -268,6 +280,5 @@
             }
         });
         </script>
-    </div>
 </body>
 </html>

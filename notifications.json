@@ -1,162 +1,32 @@
 [
     {
-        "id": "193329",
-        "user_id": "admin",
-        "announcement_id": "316631",
+        "id": "403496",
+        "user_id": "901648",
+        "announcement_id": "896262",
         "type": "published",
         "title": "New Announcement: Test",
         "message": "Test",
-        "timestamp": "2026-08-06 14:45:36",
+        "timestamp": "2026-08-26 22:38:51",
         "read": false
     },
     {
-        "id": "399773",
-        "user_id": "655834",
-        "announcement_id": "316631",
+        "id": "645182",
+        "user_id": "978582",
+        "announcement_id": "896262",
         "type": "published",
         "title": "New Announcement: Test",
         "message": "Test",
-        "timestamp": "2026-08-06 14:45:36",
+        "timestamp": "2026-08-26 22:38:51",
         "read": true
     },
     {
-        "id": "989729",
-        "user_id": "290961",
-        "announcement_id": "316631",
+        "id": "707400",
+        "user_id": "147471",
+        "announcement_id": "896262",
         "type": "published",
         "title": "New Announcement: Test",
         "message": "Test",
-        "timestamp": "2026-08-06 14:45:36",
-        "read": true
-    },
-    {
-        "id": "993326",
-        "user_id": "admin",
-        "announcement_id": "316631",
-        "type": "cancelled",
-        "title": "Cancelled: Test",
-        "message": "Test",
-        "timestamp": "2026-08-06 14:53:35",
-        "read": false
-    },
-    {
-        "id": "145090",
-        "user_id": "655834",
-        "announcement_id": "316631",
-        "type": "cancelled",
-        "title": "Cancelled: Test",
-        "message": "Test",
-        "timestamp": "2026-08-06 14:53:35",
-        "read": true
-    },
-    {
-        "id": "353513",
-        "user_id": "290961",
-        "announcement_id": "316631",
-        "type": "cancelled",
-        "title": "Cancelled: Test",
-        "message": "Test",
-        "timestamp": "2026-08-06 14:53:35",
-        "read": true
-    },
-    {
-        "id": "461245",
-        "user_id": "admin",
-        "announcement_id": "162592",
-        "type": "published",
-        "title": "New Announcement: Payment Test",
-        "message": "Testing payment",
-        "timestamp": "2026-08-07 11:38:45",
-        "read": false
-    },
-    {
-        "id": "957650",
-        "user_id": "655834",
-        "announcement_id": "162592",
-        "type": "published",
-        "title": "New Announcement: Payment Test",
-        "message": "Testing payment",
-        "timestamp": "2026-08-07 11:38:45",
-        "read": true
-    },
-    {
-        "id": "239724",
-        "user_id": "290961",
-        "announcement_id": "162592",
-        "type": "published",
-        "title": "New Announcement: Payment Test",
-        "message": "Testing payment",
-        "timestamp": "2026-08-07 11:38:45",
-        "read": true
-    },
-    {
-        "id": "512262",
-        "user_id": "admin",
-        "announcement_id": "600294",
-        "type": "published",
-        "title": "New Announcement: Connected Acc Test",
-        "message": "TEST",
-        "timestamp": "2026-08-10 09:35:40",
-        "read": false
-    },
-    {
-        "id": "564384",
-        "user_id": "655834",
-        "announcement_id": "600294",
-        "type": "published",
-        "title": "New Announcement: Connected Acc Test",
-        "message": "TEST",
-        "timestamp": "2026-08-10 09:35:40",
-        "read": true
-    },
-    {
-        "id": "658203",
-        "user_id": "290961",
-        "announcement_id": "600294",
-        "type": "published",
-        "title": "New Announcement: Connected Acc Test",
-        "message": "TEST",
-        "timestamp": "2026-08-10 09:35:40",
-        "read": true
-    },
-    {
-        "id": "875521",
-        "user_id": "655834",
-        "announcement_id": "162592",
-        "type": "cancelled",
-        "title": "Cancelled: Payment Test",
-        "message": "Testing payment",
-        "timestamp": "2026-08-10 09:41:05",
-        "read": false
-    },
-    {
-        "id": "186699",
-        "user_id": "290961",
-        "announcement_id": "162592",
-        "type": "cancelled",
-        "title": "Cancelled: Payment Test",
-        "message": "Testing payment",
-        "timestamp": "2026-08-10 09:41:05",
-        "read": true
-    },
-    {
-        "id": "604991",
-        "user_id": "655834",
-        "announcement_id": "600294",
-        "type": "cancelled",
-        "title": "Cancelled: Connected Acc Test",
-        "message": "TEST",
-        "timestamp": "2026-08-10 09:41:21",
-        "read": false
-    },
-    {
-        "id": "972960",
-        "user_id": "290961",
-        "announcement_id": "600294",
-        "type": "cancelled",
-        "title": "Cancelled: Connected Acc Test",
-        "message": "TEST",
-        "timestamp": "2026-08-10 09:41:21",
+        "timestamp": "2026-08-26 22:38:51",
         "read": true
     }
 ]

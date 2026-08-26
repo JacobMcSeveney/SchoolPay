@@ -12,15 +12,17 @@
             <li><a href="/">Home</a></li>
         </ul>
         <div class="account">
-            <ul>
-                {% if current_user.is_authenticated %}
+            {% if current_user.is_authenticated %}
+                <ul>
                     <li><a href="{{ url_for('logout') }}">Logout</a></li>
                     <li><a href="{{ url_for('user_profile', user_id=current_user.id) }}">My Profile | {{ current_user.username }}</a></li>
-                {% else %}
+                </ul>
+            {% else %}
+                <ul>
                     <li><a href="{{ url_for('login') }}">Login</a></li>
                     <li><a href="{{ url_for('register') }}">Register</a></li>
-                {% endif %}
-            </ul>
+                </ul>
+            {% endif %}
         </div>
     </nav>
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -69,6 +71,7 @@
                 {% else %}
                     <p>No payment fees.</p>
                 {% endif %}
+                </div>
             </section>
         </div>
 
@@ -160,7 +163,7 @@
 
         <div id="settings-content" class="tab-content">
             <section class="settings-section">
-                <h1>Settings</h1>
+                <h2>Settings</h2>
                 <h3>Account Details</h3>
                     <p><strong>User ID:</strong> {{ user_id }}</p>
                     <p><strong>User Type:</strong> {{ user_type | capitalize }}</p>
@@ -177,9 +180,9 @@
                     <div class="connection-list">
                         {% for account in user_connections %}
                             <div class="connection-card connected">
-                                <span><strong>{{ account.name }}</strong> (ID: {{ account.user_id }})</span>
+                                <span><strong>{{ account.name }}</strong><br> (ID: {{ account.user_id }})</span>
                                 <form action="{{ url_for('disconnect_connection', connection_id=account.connection_id) }}" method="POST" onsubmit="return confirm('Disconnect this account?');">
-                                    <button type="submit" class="pay-button">Disconnect</button>
+                                    <button type="submit" class="disconnect-button">Disconnect</button>
                                 </form>
                             </div>
                         {% endfor %}
@@ -190,6 +193,9 @@
             </section>
         </div>
     </div>
+    <footer>
+        <p style="text-align: center; margin-top: 20px;">&copy; 2026 SchoolPay. <a href="/about">Learn More</a> <a href="/contact">Contact Us</a></p>
+    </footer>
     <script>
         function switchTab(tabName) {
             document.querySelectorAll('.sidebar button').forEach(btn => btn.classList.remove('active'));

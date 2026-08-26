@@ -13,7 +13,7 @@
             <li><a href="/">Home</a></li>
         </ul>
     </nav>
-    <a style="position: relative; left: 1%; top: 15px;" class="back-link" href="/register">Back</a>
+    <a style="position: relative; left: 1%; top: 15px;" class="back-link" href="/">Back</a>
     <div class="container">
         <h1>Create an Account</h1>
 
@@ -51,16 +51,44 @@
                     <input type="text" id="city" name="city" required />
                 </div>
                 <div class="form-group">
-                    <label for="zip">Zip:</label>
-                    <input type="text" id="zip" name="zip" required />
+                    <label for="postcode">Post Code:</label>
+                    <input type="text" id="postcode" name="postcode" inputmode="numeric" pattern="[0-9]+" placeholder="e.g 1234" required />
                 </div>
             </div>
         
             <label for="country">Country:</label>
             <input type="text" id="country" name="country" required />
         
-            <label for="dob">Date of Birth:</label>
-            <input type="date" id="dob" name="dob" min="1900-01-01" max="{{ today }}" required />
+            <label>Date of Birth:</label>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="dob_day">Day:</label>
+                    <select id="dob_day" name="dob_day" required>
+                        <option value="">Day</option>
+                        {% for i in range(1, 32) %}
+                            <option value="{{ '%02d' % i }}">{{ '%02d' % i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="dob_month">Month:</label>
+                    <select id="dob_month" name="dob_month" required>
+                        <option value="">Month</option>
+                        {% for i in range(1, 13) %}
+                            <option value="{{ '%02d' % i }}">{{ '%02d' % i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="dob_year">Year:</label>
+                    <select id="dob_year" name="dob_year" required>
+                        <option value="">Year</option>
+                        {% for i in range(1900, today[:4]|int + 1) %}
+                            <option value="{{ i }}">{{ i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
         
             <label for="gender">Gender:</label>
             <select id="gender" name="gender" required>
@@ -74,5 +102,8 @@
             <button type="submit">Sign Up</button>
         </form>        
     </div>
+    <footer>
+        <p style="text-align: center; margin-top: 20px;">&copy; 2026 SchoolPay. <a href="/about">Learn More</a> <a href="/contact">Contact Us</a></p>
+    </footer>
 </body>
 </html>

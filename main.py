@@ -1,13 +1,34 @@
-from flask import Flask, render_template, request, url_for, redirect, jsonify, flash, Response
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user, login_url
-from werkzeug.security import generate_password_hash, check_password_hash
-import json, random, datetime, os, uuid
+import datetime
+import json
+import os
+import random
+import uuid
+
+from flask import (
+    Flask,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
+from flask_login import (
+    LoginManager,
+    UserMixin,
+    current_user,
+    login_required,
+    login_user,
+    logout_user,
+)
+from werkzeug.security import check_password_hash, generate_password_hash
 
 teacher_dashboard_data = []
 
 MIN_ID = 100000
 MAX_ID = 999999
 FEE_DUE_DAYS = 30  # Default number of days until a fee is due
+current_year = datetime.datetime.now().year
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -18,20 +39,35 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
+
 # User model
 class Users(UserMixin):
-    def __init__(self, username, password, email, address, city, zip, country, dob, gender, user_type, id):
+    def __init__(
+        self,
+        username,
+        password,
+        email,
+        address,
+        city,
+        postcode,
+        country,
+        dob,
+        gender,
+        user_type,
+        id,
+    ):
         self.username = username
         self.password = password
         self.email = email
         self.address = address
         self.city = city
-        self.zip = zip
+        self.postcode = postcode
         self.country = country
         self.dob = dob
         self.gender = gender
         self.user_type = user_type
         self.id = str(id)
+
 
 # Save users using JSON file
 def save_users(users):
@@ -42,16 +78,18 @@ def save_users(users):
             "email": user.email,
             "address": user.address,
             "city": user.city,
-            "zip": user.zip,
+            "postcode": user.postcode,
             "country": user.country,
             "dob": user.dob,
             "gender": user.gender,
             "user_type": user.user_type,
-            "user_id": str(user.id)
-        } for user in users.values()
+            "user_id": str(user.id),
+        }
+        for user in users.values()
     }
     with open("users.json", "w") as f:
         json.dump(data, f, indent=4)
+
 
 # Load users using JSON file
 def load_users():
@@ -60,23 +98,27 @@ def load_users():
             data = json.load(f)
             users = {
                 str(id): Users(
-                    user["username"], 
-                    user["password"], 
-                    user.get("email"), 
-                    user.get("address"), 
-                    user.get("city"), 
-                    user.get("zip"), 
-                    user.get("country"), 
-                    user.get("dob"), 
-                    user.get("gender"), 
+                    user["username"],
+                    user["password"],
+                    user.get("email"),
+                    user.get("address"),
+                    user.get("city"),
+                    user.get("postcode"),
+                    user.get("country"),
+                    user.get("dob"),
+                    user.get("gender"),
                     user.get("user_type"),
                     user.get("user_id", id),
-                ) for id, user in data.items()
+                )
+                for id, user in data.items()
             }
             return users
     except FileNotFoundError:
         return {}
+
+
 users = load_users()
+
 
 # Checks if the dob is valid.
 def validate_dob(dob):
@@ -92,9 +134,15 @@ def validate_dob(dob):
     max_date = datetime.date.today()
 
     if selected_date < min_date or selected_date > max_date:
-        return False, f"Date of birth must be between {min_date.strftime('%Y-%m-%d')} and {max_date.strftime('%Y-%m-%d')}."
+        min_str = min_date.strftime("%Y-%m-%d")
+        max_str = max_date.strftime("%Y-%m-%d")
+        return (
+            False,
+            f"Date of birth must be between {min_str} and {max_str}.",
+        )
 
     return True, ""
+
 
 # Checks if the email is valid.
 def validate_email(email):
@@ -104,6 +152,7 @@ def validate_email(email):
         return False, "Please enter a valid email address."
     return True, ""
 
+
 # Checks if the password is valid.
 def validate_password(password):
     if not password:
@@ -111,6 +160,7 @@ def validate_password(password):
     if len(password) < 6:
         return False, "Password must be at least 6 characters long."
     return True, ""
+
 
 # Checks if the username is valid.
 def validate_username(username):
@@ -122,13 +172,24 @@ def validate_username(username):
         return False, "Username already taken."
     return True, ""
 
+
+# Checks that the postcode contains digits only.
+def validate_postcode(postcode):
+    if not postcode:
+        return False, "Post code is required."
+    if not postcode.isascii() or not postcode.isdigit():
+        return False, "Post code must contain numbers only."
+    return True, ""
+
+
 # Checks all the form values.
 def validate_registration_form(data):
     validators = [
         validate_username(data.get("username")),
         validate_password(data.get("password")),
         validate_email(data.get("email")),
-        validate_dob(data.get("dob"))
+        validate_postcode(data.get("postcode")),
+        validate_dob(data.get("dob")),
     ]
 
     for is_valid, error in validators:
@@ -136,63 +197,74 @@ def validate_registration_form(data):
             return False, error
     return True, ""
 
+
 # Load user for Flask-Login
 @login_manager.user_loader
 def load_user(user_id):
     return users.get(str(user_id))
+
 
 # Home route
 @app.route("/")
 def home():
     return render_template("home.html")
 
+
 # Account register route
-@app.route('/register', methods=["GET", "POST"])
+@app.route("/register", methods=["GET", "POST"])
 def register():
     today = datetime.date.today().strftime("%Y-%m-%d")
 
     if request.method == "POST":
         username = request.form.get("username")
-        if any(user.username == username for user in users.values()):
-            return render_template("register.html", error="Username already taken!", today=today)
-
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
-        if password != confirm_password:
-            return render_template("register.html", error="Passwords do not match!", today=today)
-        hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
         email = request.form.get("email")
         address = request.form.get("address")
         city = request.form.get("city")
-        zip = request.form.get("zip")
+        postcode = request.form.get("postcode")
         country = request.form.get("country")
-        dob = request.form.get("dob")
+        dob_day = request.form.get("dob_day")
+        dob_month = request.form.get("dob_month")
+        dob_year = request.form.get("dob_year")
+        dob = f"{dob_year}-{dob_month}-{dob_day}" if all((dob_year, dob_month, dob_day)) else ""
         gender = request.form.get("gender")
         user_type = request.form.get("user_type")
 
-        is_valid_dob, dob_error = validate_dob(dob)
-        if not is_valid_dob:
-            return render_template("register.html", error=dob_error, today=today)
+        # Run all field validators.
+        registration_data = request.form.to_dict()
+        registration_data["dob"] = dob
+        is_valid, error = validate_registration_form(registration_data)
+        if not is_valid:
+            return render_template("register.html", error=error, today=today)
+
+        if password != confirm_password:
+            return render_template("register.html", error="Passwords do not match!", today=today)
+
+        hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
 
         while True:
             user_id = str(random.randint(MIN_ID, MAX_ID))
             if user_id not in users:
                 break
-        new_user = Users(username=username,
-                         password=hashed_password,
-                         email=email,
-                         address=address,
-                         city=city,
-                         zip=zip,
-                         country=country,
-                         dob=dob,
-                         gender=gender,
-                         user_type=user_type,
-                         id=user_id)
+        new_user = Users(
+            username=username,
+            password=hashed_password,
+            email=email,
+            address=address,
+            city=city,
+            postcode=postcode,
+            country=country,
+            dob=dob,
+            gender=gender,
+            user_type=user_type,
+            id=user_id,
+        )
         users[user_id] = new_user
         save_users(users)
         return redirect(url_for("login"))
     return render_template("register.html", today=today)
+
 
 # Login route
 @app.route("/login", methods=["GET", "POST"])
@@ -211,17 +283,24 @@ def login():
 
     return render_template("login.html")
 
+
 # Logged in route
 @app.route("/login_screen")
 @login_required
 def login_screen():
-      return render_template("login_screen.html", username=current_user.username, user_type=current_user.user_type)
+    return render_template(
+        "login_screen.html", username=current_user.username, user_type=current_user.user_type
+    )
+
 
 # Profile route
 @app.route("/profile")
 @login_required
 def profile():
-    return render_template("profile.html", username=current_user.username, user_type=current_user.user_type)
+    return render_template(
+        "profile.html", username=current_user.username, user_type=current_user.user_type
+    )
+
 
 # Logout route
 @app.route("/logout")
@@ -230,15 +309,17 @@ def logout():
     logout_user()
     return redirect(url_for("home"))
 
-#Student dashboard route
+
+# Student dashboard route
 @app.route("/student_dashboard")
 @login_required
 def student_dashboard():
-    if current_user.user_type not in ['student', 'teacher']: # Will add a 'parent_of_student' here later
+    if current_user.user_type not in [
+        "student",
+        "teacher",
+    ]:  # Will add a 'parent_of_student' here later
         flash("Access denied. You are not a student or a parent of this student.", "error")
-        return redirect(url_for('home'))
-    current_date = datetime.date.today()
-    payment_fees = []
+        return redirect(url_for("home"))
     # Shared with any connected parent accounts to the student accounts
     payment_history = get_combined_payment_history(current_user.id)
 
@@ -247,40 +328,40 @@ def student_dashboard():
 
     filtered_announcements_for_student = []
     for announcement in announcements:
-        if announcement.get('status') == 'cancelled':
+        if announcement.get("status") == "cancelled":
             continue
-        if announcement.get('target_users') in ['students', 'all']:
+        if announcement.get("target_users") in ["students", "all"]:
             filtered_announcements_for_student.append(announcement)
 
-    student_announcements = sorted(filtered_announcements_for_student, key=lambda time: datetime.datetime.strptime(time['timestamp'], "%Y-%m-%d %H:%M:%S"), reverse=True)
-
-    for fee in payment_fees:
-        fee_due_date_obj = datetime.datetime.strptime(fee["due_date"], "%m-%d-%Y").date()
-        fee["due_date_obj"] = fee_due_date_obj
-        fee["is_overdue"] = fee_due_date_obj < current_date and fee["status"] == "Outstanding" # Only overdue if outstanding
+    student_announcements = sorted(
+        filtered_announcements_for_student,
+        key=lambda time: datetime.datetime.strptime(time["timestamp"], "%Y-%m-%d %H:%M:%S"),
+        reverse=True,
+    )
 
     user_notifications = get_user_notifications(current_user.id)
     unread_notification_count = get_unread_notification_count(current_user.id)
 
-    return render_template("dashboard/student_dashboard.html", 
-                           username=current_user.username,
-                           user_id=current_user.id,
-                           user_type=current_user.user_type, 
-                           payment_fees=payment_fees, 
-                           payment_history=payment_history, 
-                           current_date=current_date, 
-                           student_announcements=student_announcements,
-                           notifications=user_notifications,
-                           unread_count=unread_notification_count,
-                           user_connections=user_connections)
+    return render_template(
+        "dashboard/student_dashboard.html",
+        username=current_user.username,
+        user_id=current_user.id,
+        user_type=current_user.user_type,
+        payment_history=payment_history,
+        student_announcements=student_announcements,
+        notifications=user_notifications,
+        unread_count=unread_notification_count,
+        user_connections=user_connections,
+    )
 
-#Parent dashboard route
+
+# Parent dashboard route
 @app.route("/parent_dashboard")
 @login_required
 def parent_dashboard():
-    if current_user.user_type not in ['parent', 'teacher']:
+    if current_user.user_type not in ["parent", "teacher"]:
         flash("Access denied. You are not a parent.", "error")
-        return redirect(url_for('home'))
+        return redirect(url_for("home"))
     current_date = datetime.date.today()
 
     payment_fees = []
@@ -294,8 +375,11 @@ def parent_dashboard():
             "name": fee_data.get("name", "Announcement Fee"),
             "amount": fee_data.get("amount", 0),
             "status": fee_data.get("status", "Outstanding"),
-            "due_date": fee_data.get("due_date", (current_date + datetime.timedelta(days=FEE_DUE_DAYS)).strftime("%m-%d-%Y")),
-            "is_announcement_fee": True
+            "due_date": fee_data.get(
+                "due_date",
+                (current_date + datetime.timedelta(days=FEE_DUE_DAYS)).strftime("%m-%d-%Y"),
+            ),
+            "is_announcement_fee": True,
         }
         due_obj = datetime.datetime.strptime(fee_entry["due_date"], "%m-%d-%Y").date()
         fee_entry["due_date_obj"] = due_obj
@@ -312,66 +396,87 @@ def parent_dashboard():
     # Filter announcements for parents
     filter_parent_announcements = []
     for announcement in announcements:
-        if announcement.get('status') == 'cancelled':
+        if announcement.get("status") == "cancelled":
             continue
-        if announcement.get('target_users') in ['parents', 'all']:
+        if announcement.get("target_users") in ["parents", "all"]:
             filter_parent_announcements.append(announcement)
 
-    parent_announcements = sorted(filter_parent_announcements, key=lambda time: datetime.datetime.strptime(time['timestamp'], "%Y-%m-%d %H:%M:%S"), reverse=True)
+    parent_announcements = sorted(
+        filter_parent_announcements,
+        key=lambda time: datetime.datetime.strptime(time["timestamp"], "%Y-%m-%d %H:%M:%S"),
+        reverse=True,
+    )
 
     # Check which announcements have already been saved
     user_added_fees = {fee.get("announcement_id") for fee in user_announcement_fees}
-    user_saved_free = {save.get("announcement_id") for save in announcement_payments if str(save.get("user_id")) == user_id_str}
+    user_saved_free = {
+        save.get("announcement_id")
+        for save in announcement_payments
+        if str(save.get("user_id")) == user_id_str
+    }
 
     for fee in payment_fees:
         if not fee.get("is_announcement_fee"):
-            fee_due_date_obj = datetime.datetime.strptime(fee["due_date"], "%m-%d-%Y").date()
+            fee_due_date_obj = datetime.datetime.strptime(fee["due_date"], "%d-%m-%Y").date()
             fee["due_date_obj"] = fee_due_date_obj
-            fee["is_overdue"] = fee_due_date_obj < current_date and fee["status"] == "Outstanding" # Only overdue if outstanding
+            fee["is_overdue"] = (
+                fee_due_date_obj < current_date and fee["status"] == "Outstanding"
+            )  # Only overdue if outstanding
 
     user_notifications = get_user_notifications(current_user.id)
     unread_notification_count = get_unread_notification_count(current_user.id)
 
-    return render_template("dashboard/parent_dashboard.html", 
-                           username=current_user.username,
-                           user_id=current_user.id,
-                           user_type=current_user.user_type, 
-                           payment_fees=payment_fees, 
-                           payment_history=payment_history, 
-                           current_date=current_date, 
-                           parent_announcements=parent_announcements, 
-                           user_added_fees=user_added_fees, 
-                           user_saved_free=user_saved_free,
-                           notifications=user_notifications,
-                           unread_count=unread_notification_count,
-                           user_connections=user_connections)
+    return render_template(
+        "dashboard/parent_dashboard.html",
+        username=current_user.username,
+        user_id=current_user.id,
+        user_type=current_user.user_type,
+        payment_fees=payment_fees,
+        payment_history=payment_history,
+        current_date=current_date,
+        parent_announcements=parent_announcements,
+        user_added_fees=user_added_fees,
+        user_saved_free=user_saved_free,
+        notifications=user_notifications,
+        unread_count=unread_notification_count,
+        user_connections=user_connections,
+    )
 
-#teacher dashboard route
+
+# teacher dashboard route
 @app.route("/teacher_dashboard")
 @login_required
 def teacher_dashboard():
     if current_user.user_type != "teacher":
         flash("Access denied. You are not a teacher.", "error")
-        return redirect(url_for('home'))
+        return redirect(url_for("home"))
 
-    sort_announcements = sorted(announcements, key=lambda announcement: datetime.datetime.strptime(announcement['timestamp'], "%Y-%m-%d %H:%M:%S"), reverse=True)
-    
+    sort_announcements = sorted(
+        announcements,
+        key=lambda announcement: datetime.datetime.strptime(
+            announcement["timestamp"], "%Y-%m-%d %H:%M:%S"
+        ),
+        reverse=True,
+    )
+
     # Payment history
     all_payments = []
     for payment in announcement_payments:
         payment_user = users.get(str(payment.get("user_id")))
         payment_display = {
             "transaction_id": payment.get("transaction_id", "N/A"),
-            "username": payment.get("username", payment_user.username if payment_user else "Unknown"),
+            "username": payment.get(
+                "username", payment_user.username if payment_user else "Unknown"
+            ),
             "user_id": payment.get("user_id", "N/A"),
             "title": payment.get("title", "Payment"),
             "amount": payment.get("amount", 0),
             "type": payment.get("type", "paid"),
             "card_info": payment.get("card_info", ""),
-            "timestamp": payment.get("timestamp", "")
+            "timestamp": payment.get("timestamp", ""),
         }
         all_payments.append(payment_display)
-    
+
     # Sort by most recent first
     all_payments.sort(key=lambda p: p["timestamp"], reverse=True)
 
@@ -381,24 +486,29 @@ def teacher_dashboard():
     # Connected accounts
     user_connections = get_connected_accounts(current_user.id)
 
-    return render_template("dashboard/teacher_dashboard.html", 
-                           username=current_user.username,
-                           user_id=current_user.id,
-                           user_type=current_user.user_type, 
-                           announcements=sort_announcements, 
-                           all_payments=all_payments,
-                           notifications=user_notifications,
-                           unread_count=unread_notification_count,
-                           user_connections=user_connections)
+    return render_template(
+        "dashboard/teacher_dashboard.html",
+        username=current_user.username,
+        user_id=current_user.id,
+        user_type=current_user.user_type,
+        announcements=sort_announcements,
+        all_payments=all_payments,
+        notifications=user_notifications,
+        unread_count=unread_notification_count,
+        user_connections=user_connections,
+    )
+
 
 announcements_file = "announcements.json"
 user_fees_file = "user_fees.json"
 payment_history_file = "payments.json"
 
+
 # Saves announcements to the file.
 def save_announcements(announcements_data):
     with open(announcements_file, "w") as f:
         json.dump(announcements_data, f, indent=4)
+
 
 # Loads announcements from the file.
 def load_announcements():
@@ -410,10 +520,12 @@ def load_announcements():
             return []
     return []
 
+
 # Saves user fees to the file.
 def save_user_fees(fees_data):
     with open(user_fees_file, "w") as f:
         json.dump(fees_data, f, indent=4)
+
 
 # Loads user fees from the file.
 def load_user_fees():
@@ -425,10 +537,12 @@ def load_user_fees():
             return {}
     return {}
 
+
 # Saves payment history to the file.
 def save_announcement_payments(payments_data):
     with open(payment_history_file, "w") as f:
         json.dump(payments_data, f, indent=4)
+
 
 # Loads payment history from the file.
 def load_announcement_payments():
@@ -440,6 +554,7 @@ def load_announcement_payments():
             return []
     return []
 
+
 # Load announcements
 announcements = load_announcements()
 user_fees = load_user_fees()
@@ -448,10 +563,12 @@ announcement_payments = load_announcement_payments()
 # Notifications
 notifications_file = "notifications.json"
 
+
 # Saves notifications to the file.
 def save_notifications(notifications_data):
     with open(notifications_file, "w") as f:
         json.dump(notifications_data, f, indent=4)
+
 
 # Loads notifications from the file.
 def load_notifications():
@@ -463,15 +580,18 @@ def load_notifications():
             return []
     return []
 
+
 notifications_list = load_notifications()
 
 # Connected accounts
 connected_accounts_file = "connected_accounts.json"
 
+
 # Saves connected accounts to the file.
 def save_connected_accounts(connections_data):
     with open(connected_accounts_file, "w") as f:
         json.dump(connections_data, f, indent=4)
+
 
 # Loads connected accounts from the file.
 def load_connected_accounts():
@@ -483,11 +603,14 @@ def load_connected_accounts():
             return []
     return []
 
+
 connected_accounts = load_connected_accounts()
+
 
 # Finds a connection by its id.
 def get_connection_by_id(connection_id):
     return next((c for c in connected_accounts if str(c.get("id")) == str(connection_id)), None)
+
 
 # Finds the other user in a connection.
 def get_other_user(connection, user_id):
@@ -496,6 +619,7 @@ def get_other_user(connection, user_id):
         return connection.get("user_id"), connection.get("recipient_name")
     return connection.get("requester_id"), connection.get("requester_name")
 
+
 # Gets all connected accounts for a user.
 def get_connected_accounts(user_id):
     user_id_str = str(user_id)
@@ -503,19 +627,22 @@ def get_connected_accounts(user_id):
     for connection in connected_accounts:
         if connection.get("status") != "connected":
             continue
-        if user_id_str not in (str(connection.get("requester_id")), str(connection.get("user_id"))):
+        if user_id_str not in (
+            str(connection.get("requester_id")),
+            str(connection.get("user_id")),
+        ):
             continue
         other_id, other_name = get_other_user(connection, user_id_str)
-        connected.append({
-            "connection_id": connection.get("id"),
-            "user_id": other_id,
-            "name": other_name
-        })
+        connected.append(
+            {"connection_id": connection.get("id"), "user_id": other_id, "name": other_name}
+        )
     return connected
+
 
 # Gets the ids of connected users.
 def get_connected_user_ids(user_id):
     return {str(a["user_id"]) for a in get_connected_accounts(user_id)}
+
 
 # Sends the user to the right dashboard.
 def get_user_dashboard_route():
@@ -531,6 +658,7 @@ def get_user_dashboard_route():
 def redirect_to_dashboard():
     return redirect(url_for(get_user_dashboard_route()))
 
+
 # Gets payment history for a user and their connections.
 def get_combined_payment_history(user_id):
     ids = {str(user_id)} | get_connected_user_ids(user_id)
@@ -544,46 +672,52 @@ def get_combined_payment_history(user_id):
                 display_status = "Refunded"
             else:
                 display_status = "Paid"
-            history.append({
-                "description": save.get("title", "Announcement"),
-                "date": save.get("timestamp", ""),
-                "amount": save.get("amount", 0),
-                "status": display_status,
-                "paid_by": save.get("username", "")
-            })
+            history.append(
+                {
+                    "description": save.get("title", "Announcement"),
+                    "date": save.get("timestamp", ""),
+                    "amount": save.get("amount", 0),
+                    "status": display_status,
+                    "paid_by": save.get("username", ""),
+                }
+            )
     history.sort(key=lambda p: p["date"], reverse=True)
     return history
 
+
 # Creates notifications for an announcement.
 def create_announcement_notifications(announcement, notification_type, exclude_user_id=None):
-    target = announcement.get('target_users', 'all')
+    target = announcement.get("target_users", "all")
     new_notifications = []
 
     for user_id, user in users.items():
         user_id_str = str(user_id)
         if exclude_user_id and str(exclude_user_id) == user_id_str:
             continue
-        if target == 'all':
+        if target == "all":
             pass
-        elif target == 'students' and user.user_type != 'student':
+        elif target == "students" and user.user_type != "student":
             continue
-        elif target == 'parents' and user.user_type != 'parent':
+        elif target == "parents" and user.user_type != "parent":
             continue
-        elif target == 'teacher' and user.user_type != 'teacher':
+        elif target == "teacher" and user.user_type != "teacher":
             continue
 
-        title = f"{'New Announcement' if notification_type == 'published' else 'Cancelled'}: {announcement['title']}"
-        message = announcement['content'][:200] + ('...' if len(announcement['content']) > 200 else '')
+        title_prefix = "New Announcement" if notification_type == "published" else "Cancelled"
+        title = f"{title_prefix}: {announcement['title']}"
+        message = announcement["content"][:200] + (
+            "..." if len(announcement["content"]) > 200 else ""
+        )
 
         notification = {
             "id": str(random.randint(MIN_ID, MAX_ID)),
             "user_id": user_id_str,
-            "announcement_id": announcement.get('id'),
+            "announcement_id": announcement.get("id"),
             "type": notification_type,
             "title": title,
             "message": message,
             "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "read": False
+            "read": False,
         }
         new_notifications.append(notification)
 
@@ -591,12 +725,14 @@ def create_announcement_notifications(announcement, notification_type, exclude_u
     save_notifications(notifications_list)
     return new_notifications
 
+
 # Gets notifications for a user.
 def get_user_notifications(user_id):
     user_id_str = str(user_id)
     user_notifications = [n for n in notifications_list if str(n.get("user_id")) == user_id_str]
-    user_notifications.sort(key=lambda n: n.get('timestamp', ''), reverse=True)
+    user_notifications.sort(key=lambda n: n.get("timestamp", ""), reverse=True)
     return user_notifications
+
 
 @app.route("/mark_all_notifications_read", methods=["POST"])
 @login_required
@@ -607,14 +743,19 @@ def mark_all_notifications_read():
     save_notifications(notifications_list)
     return {"success": True}
 
+
 @app.route("/mark_notification_read/<notification_id>", methods=["POST"])
 @login_required
 def mark_notification_read(notification_id):
-    notification = next((
-        n for n in notifications_list
-        if str(n.get("id")) == str(notification_id)
-        and str(n.get("user_id")) == str(current_user.id)
-    ), None)
+    notification = next(
+        (
+            n
+            for n in notifications_list
+            if str(n.get("id")) == str(notification_id)
+            and str(n.get("user_id")) == str(current_user.id)
+        ),
+        None,
+    )
 
     if not notification:
         return jsonify({"success": False, "message": "Notification not found."}), 404
@@ -623,7 +764,8 @@ def mark_notification_read(notification_id):
     save_notifications(notifications_list)
     return jsonify({"success": True})
 
-#Connected accounts
+
+# Connected accounts
 @app.route("/connect_account", methods=["POST"])
 @login_required
 def connect_account():
@@ -646,9 +788,15 @@ def connect_account():
     user_id = str(recipient.id)
 
     # Check for an existing connection between the two accounts
-    existing = next((c for c in connected_accounts
-                      if {str(c.get("requester_id")), str(c.get("user_id"))} == {requester_id, user_id}
-                      and c.get("status") == "connected"), None)
+    existing = next(
+        (
+            c
+            for c in connected_accounts
+            if {str(c.get("requester_id")), str(c.get("user_id"))} == {requester_id, user_id}
+            and c.get("status") == "connected"
+        ),
+        None,
+    )
     if existing:
         flash(f"Your account is already connected to {recipient.username}.", "warning")
         return redirect_to_dashboard()
@@ -659,7 +807,7 @@ def connect_account():
         "requester_name": current_user.username,
         "user_id": user_id,
         "recipient_name": recipient.username,
-        "status": "connected"
+        "status": "connected",
     }
     connected_accounts.append(connection)
     save_connected_accounts(connected_accounts)
@@ -667,13 +815,17 @@ def connect_account():
     flash(f"Your account is now connected to {recipient.username}.", "success")
     return redirect_to_dashboard()
 
+
 # Disconnect accounts
 @app.route("/disconnect_connection/<connection_id>", methods=["POST"])
 @login_required
 def disconnect_connection(connection_id):
     connection = get_connection_by_id(connection_id)
     user_id_str = str(current_user.id)
-    if not connection or user_id_str not in (str(connection.get("requester_id")), str(connection.get("user_id"))):
+    if not connection or user_id_str not in (
+        str(connection.get("requester_id")),
+        str(connection.get("user_id")),
+    ):
         flash("Connection not found.", "error")
         return redirect_to_dashboard()
 
@@ -683,14 +835,19 @@ def disconnect_connection(connection_id):
     flash("Connection removed.", "success")
     return redirect_to_dashboard()
 
+
 # Counts unread notifications for a user.
 def get_unread_notification_count(user_id):
     user_id_str = str(user_id)
-    return sum(1 for n in notifications_list if str(n.get("user_id")) == user_id_str and not n.get("read"))
+    return sum(
+        1 for n in notifications_list if str(n.get("user_id")) == user_id_str and not n.get("read")
+    )
+
 
 # Gets fees for a user.
 def get_user_fees(user_id):
     return user_fees.get(str(user_id), [])
+
 
 # Adds a fee to a user.
 def add_user_fee(user_id, fee_data):
@@ -699,6 +856,7 @@ def add_user_fee(user_id, fee_data):
         user_fees[user_id_str] = []
     user_fees[user_id_str].append(fee_data)
     save_user_fees(user_fees)
+
 
 # Marks a fee as paid.
 def mark_user_fee_paid(user_id, fee_id):
@@ -709,6 +867,7 @@ def mark_user_fee_paid(user_id, fee_id):
                 fee["status"] = "Paid"
                 break
         save_user_fees(user_fees)
+
 
 # Route for making announcements (teacher only)
 @app.route("/teacher/make_announcement", methods=["POST"])
@@ -724,13 +883,8 @@ def make_announcement():
     target_users = request.form.get("target_users")
 
     if not all([title, content, payment_select, target_users]):
-        announcement_message = {"text": "All fields are required!", "type": "error"}
-        return render_template("dashboard/teacher_dashboard.html", 
-                               username=current_user.username, 
-                               announcements=announcements, 
-                               announcement_message=announcement_message,
-                               notifications=get_user_notifications(current_user.id),
-                               unread_count=get_unread_notification_count(current_user.id))
+        flash("All fields are required!", "error")
+        return redirect(url_for("teacher_dashboard"))
 
     if payment_select == "none":
         payment_type = "none"
@@ -753,29 +907,25 @@ def make_announcement():
         "payment_amount": payment_amount_value,
         "target_users": target_users,
         "sender": current_user.username,
-        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
 
     announcements.append(new_announcement)
     save_announcements(announcements)
 
     # Send notification to target users
-    create_announcement_notifications(new_announcement, 'published', exclude_user_id=current_user.id)
+    create_announcement_notifications(
+        new_announcement, "published", exclude_user_id=current_user.id
+    )
 
-    sort_announcements = sorted(announcements, key=lambda announcement: datetime.datetime.strptime(announcement['timestamp'], "%Y-%m-%d %H:%M:%S"), reverse=True)
+    flash("Announcement published successfully!", "success")
+    return redirect(url_for("teacher_dashboard"))
 
-    announcement_message = {"text": "Announcement published successfully!", "type": "success"}
-    return render_template("dashboard/teacher_dashboard.html", 
-                           username=current_user.username, 
-                           announcements=sort_announcements, 
-                           announcement_message=announcement_message,
-                           notifications=get_user_notifications(current_user.id),
-                           unread_count=get_unread_notification_count(current_user.id))
 
 @app.route("/add_announcement_payment/<announcement_id>", methods=["POST"])
 @login_required
 def add_announcement_payment(announcement_id):
-    if current_user.user_type not in ['parent', 'teacher']:
+    if current_user.user_type not in ["parent", "teacher"]:
         return "Unauthorized", 403
 
     # Find the announcement
@@ -803,17 +953,23 @@ def add_announcement_payment(announcement_id):
         "name": announcement["title"],
         "amount": announcement.get("payment_amount", 0),
         "status": "Outstanding",
-        "due_date": (datetime.date.today() + datetime.timedelta(days=FEE_DUE_DAYS)).strftime("%m-%d-%Y"),
-        "added_on": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "due_date": (datetime.date.today() + datetime.timedelta(days=FEE_DUE_DAYS)).strftime(
+            "%m-%d-%Y"
+        ),
+        "added_on": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
     add_user_fee(current_user.id, new_fee)
-    flash(f"Announcement fee '{announcement['title']}' has been added to your payment fees.", "success")
+    flash(
+        f"Announcement fee '{announcement['title']}' has been added to your payment fees.",
+        "success",
+    )
     return redirect(url_for("parent_dashboard"))
+
 
 @app.route("/free_announcement_payment/<announcement_id>", methods=["POST"])
 @login_required
 def free_announcement_payment(announcement_id):
-    if current_user.user_type not in ['parent', 'teacher']:
+    if current_user.user_type not in ["parent", "teacher"]:
         return "Unauthorized", 403
 
     announcement = next((a for a in announcements if a["id"] == announcement_id), None)
@@ -827,7 +983,9 @@ def free_announcement_payment(announcement_id):
 
     # Check if already saved.
     for save in announcement_payments:
-        if str(save.get("announcement_id")) == str(announcement_id) and str(save.get("user_id")) == str(current_user.id):
+        if str(save.get("announcement_id")) == str(announcement_id) and str(
+            save.get("user_id")
+        ) == str(current_user.id):
             flash("You have already saved this free announcement.", "warning")
             return redirect(url_for("parent_dashboard"))
 
@@ -840,12 +998,13 @@ def free_announcement_payment(announcement_id):
         "title": announcement["title"],
         "type": "free",
         "amount": 0,
-        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
     announcement_payments.append(save)
     save_announcement_payments(announcement_payments)
     flash(f"Free announcement '{announcement['title']}' has been saved.", "success")
     return redirect(url_for("parent_dashboard"))
+
 
 @app.route("/delete_user/<string:user_id>", methods=["POST"])
 @login_required
@@ -853,12 +1012,14 @@ def delete_user(user_id):
     # Ensure only teachers can delete users
     if current_user.user_type != "teacher":
         return "Unauthorized: You must be a teacher to delete users.", 403
-
+    
     user_id = str(user_id)
 
     # Prevent an teacher from deleting themselves
-    if current_user.id == str(user_id):
-        return "Error: You cannot delete your own account while logged in.", 400
+    if current_user.id == str(user_id) and current_user.user_type == "teacher":
+        return "Error: You cannot delete your own account while logged in.", 404
+    else:
+        pass
 
     if str(user_id) in users:
         del users[str(user_id)]
@@ -867,6 +1028,7 @@ def delete_user(user_id):
         return redirect(url_for("teacher_dashboard"))
     else:
         return "User not found.", 404
+
 
 @app.route("/cancel_announcement/<string:announcement_id>", methods=["POST"])
 @login_required
@@ -885,7 +1047,10 @@ def cancel_announcement(announcement_id):
     # Find all paid fee IDs tied to this announcement (before removing fees)
     for user_id_str, fees in list(user_fees.items()):
         for fee in fees:
-            if str(fee.get("announcement_id")) == str(announcement_id) and fee.get("status") == "Paid":
+            if (
+                str(fee.get("announcement_id")) == str(announcement_id)
+                and fee.get("status") == "Paid"
+            ):
                 fee_id = fee.get("id")
                 # Find the original payment record
                 for payment in announcement_payments:
@@ -904,7 +1069,7 @@ def cancel_announcement(announcement_id):
                             "fee_id": payment.get("fee_id"),
                             "type": "refunded",
                             "announcement_id": announcement_id,
-                            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         }
                         announcement_payments.append(refund_record)
                         break
@@ -912,16 +1077,19 @@ def cancel_announcement(announcement_id):
 
     # Remove outstanding fees tied to this announcement
     for user_id_str, fees in list(user_fees.items()):
-        user_fees[user_id_str] = [fee for fee in fees if str(fee.get("announcement_id")) != str(announcement_id)]
+        user_fees[user_id_str] = [
+            fee for fee in fees if str(fee.get("announcement_id")) != str(announcement_id)
+        ]
         if not user_fees[user_id_str]:
             del user_fees[user_id_str]
     save_user_fees(user_fees)
 
     # Notify affected users
-    create_announcement_notifications(announcement, 'cancelled', exclude_user_id=current_user.id)
+    create_announcement_notifications(announcement, "cancelled", exclude_user_id=current_user.id)
 
     flash(f"Announcement '{announcement['title']}' has been cancelled.", "success")
     return redirect(url_for("teacher_dashboard"))
+
 
 # Get all user data (teacher only)
 @app.route("/api/users")
@@ -937,9 +1105,11 @@ def get_users_api():
             "id": user_obj.id,
             "email": user_obj.email,
             "user_type": user_obj.user_type,
-        } for user_id, user_obj in users.items()
+        }
+        for user_id, user_obj in users.items()
     }
     return users_data_for_api, 200
+
 
 @app.route("/profile/<string:user_id>")
 @login_required
@@ -948,10 +1118,10 @@ def user_profile(user_id):
     user = users.get(str(user_id))
     if not user:
         return "User not found", 404
-    
+
     # Payment history per-user (visible to teachers)
     payment_history = []
-    if current_user.user_type == 'teacher':
+    if current_user.user_type == "teacher":
         user_id_str = str(user.id)
         for save in announcement_payments:
             if str(save.get("user_id")) == user_id_str:
@@ -962,96 +1132,187 @@ def user_profile(user_id):
                     display_status = "Refunded"
                 else:
                     display_status = "Paid"
-                payment_history.append({
-                    "transaction_id": save.get("transaction_id", "N/A"),
-                    "description": save.get("title", "Payment"),
-                    "date": save.get("timestamp", ""),
-                    "amount": save.get("amount", 0),
-                    "type": save.get("type", "paid"),
-                    "card_info": save.get("card_info", ""),
-                    "status": display_status
-                })
+                payment_history.append(
+                    {
+                        "transaction_id": save.get("transaction_id", "N/A"),
+                        "description": save.get("title", "Payment"),
+                        "date": save.get("timestamp", ""),
+                        "amount": save.get("amount", 0),
+                        "type": save.get("type", "paid"),
+                        "card_info": save.get("card_info", ""),
+                        "status": display_status,
+                    }
+                )
         # Sort most recent first
         payment_history.sort(key=lambda p: p["date"], reverse=True)
 
-    return render_template("profile.html", 
-                           user=user, 
-                           user_id=user_id, 
-                           payment_history=payment_history)
+    # Connected accounts for this user (visible to teachers)
+    user_connections = []
+    if current_user.user_type == "teacher":
+        user_connections = get_connected_accounts(user.id)
 
-#About page route
+    return render_template(
+        "profile.html",
+        user=user,
+        user_id=user_id,
+        payment_history=payment_history,
+        user_connections=user_connections,
+    )
+
+
+# About page route
 @app.route("/about")
 def about():
     return render_template("about.html")
 
-#Contact page route
+
+# Contact page route
 @app.route("/contact")
 def contact():
     return render_template("contact.html")
 
-#Payment route
-@app.route("/payment", defaults={'fee_id': None})
+
+# Payment route
+@app.route("/payment", defaults={"fee_id": None})
 @app.route("/payment/<fee_id>")
 @login_required
 def payment(fee_id):
     prefill_data = {}
     if fee_id:
         user_fees_list = get_user_fees(current_user.id)
-        
-        selected_fee = next((fee for fee in user_fees_list if str(fee.get("id")) == str(fee_id) and fee.get("status") == "Outstanding"), None)
+
+        selected_fee = next(
+            (
+                fee
+                for fee in user_fees_list
+                if str(fee.get("id")) == str(fee_id) and fee.get("status") == "Outstanding"
+            ),
+            None,
+        )
 
         if selected_fee:
             prefill_data = {
-                "id": current_user.id,
                 "amount": selected_fee.get("amount", 0),
                 "fee_name": selected_fee.get("name", "Payment"),
-                "card_holder_name": current_user.username,
-                "fee_id": fee_id
+                "fee_id": fee_id,
             }
 
-    return render_template("payment.html", prefill_data=prefill_data, dashboard_route=get_user_dashboard_route())
+    current_year = datetime.datetime.now().year
+    return render_template(
+        "payment.html",
+        prefill_data=prefill_data,
+        dashboard_route=get_user_dashboard_route(),
+        current_year=current_year,
+    )
 
-@app.route('/make_payment', methods=['POST'])
+
+@app.route("/make_payment", methods=["POST"])
 @login_required
 def make_payment():
     try:
-        id = request.form.get('id')
-        amount_str = request.form.get('amount')
-        card_name = request.form.get('card_holder_name')
-        card_number = (request.form.get('card_number') or '').strip()
-        fee_id = request.form.get('fee_id')
-        fee_name = request.form.get('fee_name', 'Payment')
+        student_id = request.form.get("student_id")
+        amount_str = request.form.get("amount")
+        card_name = request.form.get("card_holder_name")
+        card_number = (request.form.get("card_number") or "").strip()
+        exp_month = request.form.get("exp_month")
+        exp_year = request.form.get("exp_year")
+        fee_id = request.form.get("fee_id")
+        fee_name = request.form.get("fee_name", "Payment")
         transaction_id = str(uuid.uuid4())[:12].upper()
+        current_year = datetime.datetime.now().year
 
-        # Validate amount (handle missing or non number values)
+        # Validate amount (handles missing or non number values)
         try:
             amount = float(amount_str)
         except (TypeError, ValueError):
             prefill_data = {
-                "id": id,
                 "amount": amount_str,
                 "card_holder_name": card_name,
                 "fee_id": fee_id,
-                "fee_name": fee_name
+                "fee_name": fee_name,
             }
-            return render_template('payment.html', error="Invalid payment amount.", prefill_data=prefill_data, dashboard_route=get_user_dashboard_route())
+            return render_template(
+                "payment.html",
+                error="Invalid payment amount.",
+                prefill_data=prefill_data,
+                dashboard_route=get_user_dashboard_route(),
+                current_year=current_year,
+            )
+
+        # Reject negative or unreasonably large amounts
+        if amount <= 0 or amount > 1000000:
+            prefill_data = {
+                "amount": amount_str,
+                "card_holder_name": card_name,
+                "fee_id": fee_id,
+                "fee_name": fee_name,
+            }
+            return render_template(
+                "payment.html",
+                error="Payment amount must be greater than $0.00.",
+                prefill_data=prefill_data,
+                dashboard_route=get_user_dashboard_route(),
+                current_year=current_year,
+            )
 
         # Validate card number length before slicing
         if not card_number or len(card_number) < 4 or not card_number.isdigit():
             prefill_data = {
-                "id": id,
                 "amount": amount_str,
                 "card_holder_name": card_name,
                 "fee_id": fee_id,
-                "fee_name": fee_name
+                "fee_name": fee_name,
             }
-            return render_template('payment.html', error="Invalid card number.", prefill_data=prefill_data, dashboard_route=get_user_dashboard_route())
+            return render_template(
+                "payment.html",
+                error="Invalid card number.",
+                prefill_data=prefill_data,
+                dashboard_route=get_user_dashboard_route(),
+                current_year=current_year,
+            )
+
+        # Validate expiry date
+        try:
+            exp_month_int = int(exp_month)
+            exp_year_int = int(exp_year)
+            if not (1 <= exp_month_int <= 12):
+                raise ValueError("Invalid month")
+        except (TypeError, ValueError):
+            prefill_data = {
+                "amount": amount_str,
+                "card_holder_name": card_name,
+                "fee_id": fee_id,
+                "fee_name": fee_name,
+            }
+            return render_template(
+                "payment.html",
+                error="Invalid card expiry date.",
+                prefill_data=prefill_data,
+                dashboard_route=get_user_dashboard_route(),
+                current_year=current_year,
+            )
+
+        now = datetime.datetime.now()
+        if (exp_year_int, exp_month_int) < (now.year, now.month):
+            prefill_data = {
+                "amount": amount_str,
+                "card_holder_name": card_name,
+                "fee_id": fee_id,
+                "fee_name": fee_name,
+            }
+            return render_template(
+                "payment.html",
+                error="Card has expired. Please use a valid card.",
+                prefill_data=prefill_data,
+                dashboard_route=get_user_dashboard_route(),
+                current_year=current_year,
+            )
 
         card_preview = f"Card Ending in {card_number[-4:]}"
-        
+
         payment_record = {
             "transaction_id": transaction_id,
-            "id": id,
+            "student_id": student_id,
             "user_id": str(current_user.id),
             "username": current_user.username,
             "title": fee_name,
@@ -1061,9 +1322,9 @@ def make_payment():
             "status": "Paid",
             "fee_id": fee_id,
             "type": "paid",
-            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
-        
+
         # Mark the fee as paid
         if fee_id:
             mark_user_fee_paid(current_user.id, fee_id)
@@ -1073,20 +1334,27 @@ def make_payment():
         save_announcement_payments(announcement_payments)
 
         return render_template(
-            'make_payment.html', 
-            id=id, 
-            amount=amount, 
-            card_holder=card_name, 
-            card_info=card_preview, 
-            status="Paid", 
-            timestamp=payment_record['timestamp'], 
+            "make_payment.html",
+            student_id=student_id,
+            amount=amount,
+            card_holder=card_name,
+            card_info=card_preview,
+            status="Paid",
+            timestamp=payment_record["timestamp"],
             transaction_id=transaction_id,
             fee_name=fee_name,
-            dashboard_route=get_user_dashboard_route()
+            dashboard_route=get_user_dashboard_route(),
         )
 
-    except Exception as e:
-        return render_template('payment.html', error="Payment failed. Please try again.", prefill_data={}, dashboard_route=get_user_dashboard_route())
+    except Exception:
+        return render_template(
+            "payment.html",
+            error="Payment failed. Please try again.",
+            prefill_data={},
+            dashboard_route=get_user_dashboard_route(),
+            current_year=datetime.datetime.now().year,
+        )
+
 
 if __name__ == "__main__":
-   app.run(debug=True, port=8001)
+    app.run(debug=True, port=8001)

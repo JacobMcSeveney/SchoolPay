@@ -14,13 +14,13 @@
         <div class="account">
             {% if current_user.is_authenticated %}
                 <ul>
-                    <li><a href="/logout">Logout</a></li>
+                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
                     <li><a href="{{ url_for('user_profile', user_id=current_user.id) }}">My Profile | {{ current_user.username }}</a></li>
                 </ul>
             {% else %}
                 <ul>
-                    <li><a href="/login">Login</a></li>
-                    <li><a href="/register">Register</a></li>
+                    <li><a href="{{ url_for('login') }}">Login</a></li>
+                    <li><a href="{{ url_for('register') }}">Register</a></li>
                 </ul>
             {% endif %}
         </div>
@@ -32,6 +32,9 @@
             {% if current_user.is_authenticated and current_user.user_type == 'teacher' %}
                 <button class="button active" onclick="switchTab('overview')">Overview</button>
                 <button class="button" onclick="switchTab('history')">Payment History</button>
+                <button class="button" onclick="switchTab('connections')">Connected Accounts</button>
+            {% else %}
+                <button class="button active" onclick="switchTab('overview')">Overview</button>
             {% endif %}
         </aside>
 
@@ -45,13 +48,15 @@
                 <p><strong>Country:</strong> {{ user.country }}</p>
                 <p><strong>Date of Birth:</strong> {{ user.dob }}</p>
                 <p><strong>Gender:</strong> {{ user.gender | capitalize }}</p>
-                <a href="{{ url_for('teacher_dashboard') }}" class="profile-button">Back to Teacher Dashboard</a>
+                <a href="{{ url_for('%s_dashboard' % user.user_type) }}" class="profile-button">Go to Your Dashboard</a>
                 {% if current_user.id != user.id %}
                     <form action="{{ url_for('delete_user', user_id=user.id) }}" method="post" onsubmit="return confirm('Are you sure you want to delete {{ user.username }}?');">
                         <button type="submit" class="delete-button">Delete User</button>
                     </form>
                 {% else %}
-                    <p class="error">You cannot delete your own account from this page.</p>
+                    {% if current_user.user_type == 'teacher' %}
+                        <p class="error">You cannot delete your own account from this page.</p>
+                    {% endif %}
                 {% endif %}
             </section>
         </div>
@@ -76,6 +81,25 @@
             </section>
         </div>
 
+        {% if current_user.is_authenticated and current_user.user_type == 'teacher' %}
+        <div id="connections-content" class="tab-content">
+            <section class="settings-section">
+                <h2>Connected Accounts</h2>
+                {% if user_connections %}
+                    <div class="connection-list">
+                        {% for account in user_connections %}
+                            <div class="connection-card connected">
+                                <span><strong>{{ account.name }}</strong> (ID: {{ account.user_id }})</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No connected accounts.</p>
+                {% endif %}
+            </section>
+        </div>
+        {% endif %}
+
         <script>
             function switchTab(tabName) {
                 document.querySelectorAll('.sidebar button').forEach(btn => btn.classList.remove('active'));
@@ -87,5 +111,8 @@
             document.addEventListener('DOMContentLoaded', () => switchTab('overview'));
         </script>
     </div>
+    <footer>
+        <p style="text-align: center; margin-top: 20px;">&copy; 2026 SchoolPay. <a href="/about">Learn More</a> <a href="/contact">Contact Us</a></p>
+    </footer>
 </body>
 </html>

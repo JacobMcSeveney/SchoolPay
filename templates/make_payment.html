@@ -21,12 +21,15 @@
         <div class="receipt-box" style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <h2>Receipt Details</h2>
             <p><strong>Payment For:</strong> {{ fee_name if fee_name else 'General Payment' }}</p>
-            <p><strong>ID:</strong> {{ id if id else 'N/A' }}</p>
+            <p><strong>Account ID Paid For:</strong> {{ student_id if student_id else 'N/A' }}</p>
             <p><strong>Amount Paid:</strong> ${{ "%.2f"|format(amount) }}</p>
             <p><strong>Transaction ID:</strong> {{ transaction_id }}</p>
         </div>
 
         <a href="{{ url_for(dashboard_route) }}" class="btn">Return to Dashboard</a>
     </div>
+    <footer>
+        <p style="text-align: center; margin-top: 20px;">&copy; 2026 SchoolPay. <a href="/about">Learn More</a> <a href="/contact">Contact Us</a></p>
+    </footer>
 </body>
 </html>

@@ -1,54 +1,41 @@
 {
-    "655834": {
-        "username": "Student",
-        "password": "pbkdf2:sha256:1000000$pkIYWkbHvWlpVSAK$fa97d3d81cb2d983ce2ffb06ce1f8aa8e1dd932cb6195b8ab315b6d0e5a2e4af",
-        "email": "studentemail@email.com",
-        "address": "Address",
-        "city": "City",
-        "zip": "Zip",
-        "country": "Country",
-        "dob": "1111-01-01",
-        "gender": "other",
-        "user_type": "student",
-        "user_id": 655834
-    },
-    "290961": {
-        "username": "Parent",
-        "password": "pbkdf2:sha256:1000000$M2cUgILwwnGd0UxU$58de0ca69888681f2009d5969ed2e04abafaf5e1ae030d0fcbf5d80f833e70fe",
-        "email": "parentemail@email.com",
-        "address": "Address",
-        "city": "City",
-        "zip": "Zip",
-        "country": "New Zealand",
-        "dob": "1111-01-01",
-        "gender": "other",
-        "user_type": "parent",
-        "user_id": 290961
-    },
-    "141686": {
+    "775032": {
         "username": "Teacher",
-        "password": "pbkdf2:sha256:1000000$i7uueKQyjYKGRqvN$4dbc4114d23f8498c6893c8f0c47f27847be2f046e617e02ae91bd14e44c3e9a",
-        "email": "teacher@school.nz",
-        "address": "110 westmorland rise",
-        "city": "Tauranga",
-        "zip": "3110",
-        "country": "New Zealand",
-        "dob": "1980-02-05",
-        "gender": "other",
-        "user_type": "admin",
-        "user_id": 141686
+        "password": "pbkdf2:sha256:1000000$tLbMiDwSjZ6i7Ig6$a8bb0b4d8ae6953f067eda0297b57db9b66fb507c52b1cf3b44c034f2aaa8f12",
+        "email": "teacher@gmail.com",
+        "address": "111 Address Road",
+        "city": "City",
+        "postcode": "1234",
+        "country": "NZ",
+        "dob": "2000-01-01",
+        "gender": "male",
+        "user_type": "teacher",
+        "user_id": "775032"
     },
-    "860487": {
-        "username": "Parent 2",
-        "password": "pbkdf2:sha256:1000000$fXYqsh22bRmmj5ee$e2e91256f111e90d4e93c3eae511a6258688898fc41315967d25af9941bc7e52",
-        "email": "Parent@gmail.com",
-        "address": "110 schoolroad",
-        "city": "Katikati",
-        "zip": "1092",
-        "country": "Australia",
-        "dob": "3000-03-03",
-        "gender": "other",
+    "901648": {
+        "username": "Parent",
+        "password": "pbkdf2:sha256:1000000$bScZwr5ahdnJSdvG$5f4a6cc65a78b8e458a530e2633d0269de6d95ba76f794b5e72d746ca48fd274",
+        "email": "parent@gmail.com",
+        "address": "111 Address Lane",
+        "city": "City",
+        "postcode": "1234",
+        "country": "NZ",
+        "dob": "2000-01-02",
+        "gender": "male",
         "user_type": "parent",
-        "user_id": 860487
+        "user_id": "901648"
+    },
+    "978582": {
+        "username": "Student",
+        "password": "pbkdf2:sha256:1000000$xePfgE5ddguUuvUn$b5a3b7c3d41b99bdb1f388ef18e31d6685993bcc94064c481919d0acf26e9f17",
+        "email": "student@gmail.com",
+        "address": "111 Address Road",
+        "city": "City",
+        "postcode": "1234",
+        "country": "NZ",
+        "dob": "2000-01-01",
+        "gender": "male",
+        "user_type": "student",
+        "user_id": "978582"
     }
 }

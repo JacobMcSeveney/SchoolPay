@@ -9,23 +9,21 @@
 <body>
     <nav>
         <ul>
-            <li><a class="active" href="/">Home</a></li>
-            <li><a href="/about">About</a></li>
-            <li><a href="/contact">Contact</a></li>
+            <li><a href="/">Home</a></li>
         </ul>
         <div class="account">
             {% if current_user.is_authenticated %}
-                    <ul>
-                        <li><a href="/logout">Logout</a></li>
-                        <li><a href="{{ url_for('user_profile', user_id=current_user.id) }}">My Profile | {{ current_user.username }}</a></li>
-                    </ul>
-                        {% else %}
-                    <ul>
-                        <li><a href="/login">Login</a></li>
-                        <li><a href="/register">Register</a></li>
-                    </ul>
-                        {% endif %}
-    </div>
+                <ul>
+                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                    <li><a href="{{ url_for('user_profile', user_id=current_user.id) }}">My Profile | {{ current_user.username }}</a></li>
+                </ul>
+            {% else %}
+                <ul>
+                    <li><a href="{{ url_for('login') }}">Login</a></li>
+                    <li><a href="{{ url_for('register') }}">Register</a></li>
+                </ul>
+            {% endif %}
+        </div>
     </nav>
     <div class="hero-image">
         <div class="hero-text">
@@ -64,7 +62,7 @@
         </div>
     </section>
     <footer>
-        <p style="text-align: center; margin-top: 20px;">&copy; 2026 StudentPay. <a href="/about">Learn More</a> <a href="/contact">Contact Us</a></p>
+        <p style="text-align: center; margin-top: 20px;">&copy; 2026 SchoolPay. <a href="/about">Learn More</a> <a href="/contact">Contact Us</a></p>
     </footer>
 </body>
 </html>
