@@ -172,7 +172,6 @@ def validate_username(username):
         return False, "Username already taken."
     return True, ""
 
-
 # Checks that the postcode contains digits only.
 def validate_postcode(postcode):
     if not postcode:
