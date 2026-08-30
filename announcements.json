@@ -7,6 +7,28 @@
         "payment_amount": 100.0,
         "target_users": "all",
         "sender": "Teacher",
-        "timestamp": "2026-08-26 22:38:51"
+        "timestamp": "2026-08-26 22:38:51",
+        "status": "cancelled"
+    },
+    {
+        "id": "172472",
+        "title": "A",
+        "content": "A",
+        "payment_type": "paid",
+        "payment_amount": 0.0,
+        "target_users": "all",
+        "sender": "Teacher",
+        "timestamp": "2026-08-30 14:43:03",
+        "status": "cancelled"
+    },
+    {
+        "id": "977520",
+        "title": "a",
+        "content": "a",
+        "payment_type": "paid",
+        "payment_amount": 12.0,
+        "target_users": "all",
+        "sender": "Teacher",
+        "timestamp": "2026-08-30 14:49:18"
     }
 ]

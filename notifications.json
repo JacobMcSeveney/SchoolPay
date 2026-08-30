@@ -28,5 +28,85 @@
         "message": "Test",
         "timestamp": "2026-08-26 22:38:51",
         "read": true
+    },
+    {
+        "id": "108401",
+        "user_id": "901648",
+        "announcement_id": "172472",
+        "type": "published",
+        "title": "New Announcement: A",
+        "message": "A",
+        "timestamp": "2026-08-30 14:43:03",
+        "read": false
+    },
+    {
+        "id": "952977",
+        "user_id": "978582",
+        "announcement_id": "172472",
+        "type": "published",
+        "title": "New Announcement: A",
+        "message": "A",
+        "timestamp": "2026-08-30 14:43:03",
+        "read": false
+    },
+    {
+        "id": "426155",
+        "user_id": "901648",
+        "announcement_id": "172472",
+        "type": "cancelled",
+        "title": "Cancelled: A",
+        "message": "A",
+        "timestamp": "2026-08-30 14:45:19",
+        "read": false
+    },
+    {
+        "id": "393996",
+        "user_id": "978582",
+        "announcement_id": "172472",
+        "type": "cancelled",
+        "title": "Cancelled: A",
+        "message": "A",
+        "timestamp": "2026-08-30 14:45:19",
+        "read": false
+    },
+    {
+        "id": "559700",
+        "user_id": "901648",
+        "announcement_id": "896262",
+        "type": "cancelled",
+        "title": "Cancelled: Test",
+        "message": "Test",
+        "timestamp": "2026-08-30 14:45:22",
+        "read": false
+    },
+    {
+        "id": "140506",
+        "user_id": "978582",
+        "announcement_id": "896262",
+        "type": "cancelled",
+        "title": "Cancelled: Test",
+        "message": "Test",
+        "timestamp": "2026-08-30 14:45:22",
+        "read": false
+    },
+    {
+        "id": "780858",
+        "user_id": "901648",
+        "announcement_id": "977520",
+        "type": "published",
+        "title": "New Announcement: a",
+        "message": "a",
+        "timestamp": "2026-08-30 14:49:18",
+        "read": false
+    },
+    {
+        "id": "430277",
+        "user_id": "978582",
+        "announcement_id": "977520",
+        "type": "published",
+        "title": "New Announcement: a",
+        "message": "a",
+        "timestamp": "2026-08-30 14:49:18",
+        "read": false
     }
 ]

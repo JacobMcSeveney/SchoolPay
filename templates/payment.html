@@ -25,22 +25,22 @@
         <form class="register-form" action="/make_payment" method="post">
             <h2>Payment Details</h2>
             <label for="student_id">Student's Account ID:</label>
-            <input type="text" id="student_id" name="student_id" placeholder="e.g. The Students ID that you're paying on behalf of." />
+            <input type="text" id="student_id" name="student_id" value="{{ prefill_data.student_id if prefill_data.student_id else '' }}" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" title="Enter the student's 6-digit account ID." placeholder="e.g. 123456 (the student's 6-digit account ID)" required >
 
             <label for="amount">Amount to Pay:</label>
-            <input type="number" id="amount" name="amount" min="0.01" step="0.01" value="{{ '%.2f'|format(prefill_data.amount) if prefill_data.amount else '' }}" required placeholder="e.g. 20" {% if prefill_data.fee_id %}readonly{% endif %}/>
+            <input type="number" id="amount" name="amount" min="0.01" step="0.01" value="{{ '%.2f'|format(prefill_data.amount) if prefill_data.amount else '' }}" required placeholder="e.g. 20" {% if prefill_data.fee_id %}readonly{% endif %}>
             {% if prefill_data.fee_id %}
                 <p class="hint" style="font-size: 0.85em; color: #666;">This amount is fixed by the fee you're paying and can't be changed.</p>
             {% endif %}
 
-            <input type="hidden" name="fee_id" value="{{ prefill_data.fee_id }}" />
-            <input type="hidden" name="fee_name" value="{{ prefill_data.fee_name }}" />
+            <input type="hidden" name="fee_id" value="{{ prefill_data.fee_id }}" >
+            <input type="hidden" name="fee_name" value="{{ prefill_data.fee_name }}" >
 
             <h2>Payment Information</h2>
             <label for="card_holder_name" >Card Holder Name:</label>
-            <input type="text" id="card_holder_name" name="card_holder_name" required placeholder="e.g. John Doe"/>
+            <input type="text" id="card_holder_name" name="card_holder_name" required placeholder="e.g. John Doe">
             <label for="card_number">Card Number:</label>
-            <input type="text" id="card_number" name="card_number" pattern="[0-9]{13,16}" placeholder="13-16 digits (no spaces)" required />
+            <input type="text" id="card_number" name="card_number" pattern="[0-9]{13,16}" placeholder="13-16 digits (no spaces)" required >
 
             <div class="form-row">
                 <div class="form-group">
@@ -64,7 +64,7 @@
             </div>
             
             <label for="cvv">CVV:</label>
-            <input type="text" id="cvv" name="cvv" pattern="[0-9]{3,4}" placeholder="3 or 4 digits (no spaces)" required />
+            <input type="text" id="cvv" name="cvv" pattern="[0-9]{3,4}" placeholder="3 or 4 digits (no spaces)" required >
 
             <button type="submit">Complete Payment</button>
         </form>

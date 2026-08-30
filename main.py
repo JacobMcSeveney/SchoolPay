@@ -168,7 +168,7 @@ def validate_username(username):
         return False, "Username is required."
     if len(username) < 3:
         return False, "Username must be at least 3 characters long."
-    if any(user.username == username for user in users.values()):
+    if any(user.username.lower() == username.lower() for user in users.values()):
         return False, "Username already taken."
     return True, ""
 
@@ -895,9 +895,17 @@ def make_announcement():
     else:
         payment_type = "paid"
         try:
-            payment_amount_value = float(payment_amount) if payment_amount else 0.0
+            payment = str(payment_amount).strip() if payment_amount is not None else ""
+            payment = payment.lstrip("0") or "0"
+            if payment.startswith("."):
+                payment = "0" + payment
+            payment_amount_value = float(payment) if payment else 0.0
         except (ValueError, TypeError):
             payment_amount_value = 0.0
+
+        if payment_amount_value <= 0:
+            flash("Paid announcements must have an amount greater than $0.00.", "error")
+            return redirect(url_for("teacher_dashboard"))
 
     new_announcement = {
         "id": str(random.randint(MIN_ID, MAX_ID)),
@@ -1228,6 +1236,7 @@ def make_payment():
             prefill_data = {
                 "amount": amount_str,
                 "card_holder_name": card_name,
+                "student_id": student_id,
                 "fee_id": fee_id,
                 "fee_name": fee_name,
             }
@@ -1240,16 +1249,55 @@ def make_payment():
             )
 
         # Reject negative or unreasonably large amounts
-        if amount <= 0 or amount > 1000000:
+        if amount <= 0:
+            error = "Payment amount must be greater than $0.00."
+        elif amount > 1000000:
+            error = "Payment amount is too large."
             prefill_data = {
                 "amount": amount_str,
                 "card_holder_name": card_name,
+                "student_id": student_id,
                 "fee_id": fee_id,
                 "fee_name": fee_name,
             }
             return render_template(
                 "payment.html",
-                error="Payment amount must be greater than $0.00.",
+                error=error,
+                prefill_data=prefill_data,
+                dashboard_route=get_user_dashboard_route(),
+                current_year=current_year,
+            )
+
+        # Validate the student ID refers to a real student account
+        student_id = (student_id or "").strip()
+        if not student_id:
+            prefill_data = {
+                "amount": amount_str,
+                "card_holder_name": card_name,
+                "student_id": student_id,
+                "fee_id": fee_id,
+                "fee_name": fee_name,
+            }
+            return render_template(
+                "payment.html",
+                error="Please enter the student's account ID.",
+                prefill_data=prefill_data,
+                dashboard_route=get_user_dashboard_route(),
+                current_year=current_year,
+            )
+
+        student_account = users.get(student_id)
+        if not student_account or student_account.user_type != "student":
+            prefill_data = {
+                "amount": amount_str,
+                "card_holder_name": card_name,
+                "student_id": student_id,
+                "fee_id": fee_id,
+                "fee_name": fee_name,
+            }
+            return render_template(
+                "payment.html",
+                error="No student account was found with that ID.",
                 prefill_data=prefill_data,
                 dashboard_route=get_user_dashboard_route(),
                 current_year=current_year,
@@ -1260,6 +1308,7 @@ def make_payment():
             prefill_data = {
                 "amount": amount_str,
                 "card_holder_name": card_name,
+                "student_id": student_id,
                 "fee_id": fee_id,
                 "fee_name": fee_name,
             }
@@ -1281,6 +1330,7 @@ def make_payment():
             prefill_data = {
                 "amount": amount_str,
                 "card_holder_name": card_name,
+                "student_id": student_id,
                 "fee_id": fee_id,
                 "fee_name": fee_name,
             }
@@ -1297,6 +1347,7 @@ def make_payment():
             prefill_data = {
                 "amount": amount_str,
                 "card_holder_name": card_name,
+                "student_id": student_id,
                 "fee_id": fee_id,
                 "fee_name": fee_name,
             }

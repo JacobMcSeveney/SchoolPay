@@ -10,6 +10,8 @@
     <nav>
         <ul>
             <li><a href="/">Home</a></li>
+            <li><a href="/about">About</a></li>
+            <li><a href="/contact" class="active">Contact</a></li>
         </ul>
         <div class="account">
             {% if current_user.is_authenticated %}
@@ -26,7 +28,7 @@
         </div>
     </nav>
     <div class="container">
-        <h2>Contact Us</h2>
+        <h1>Contact Us</h1>
         <p>For any inquiries or assistance, please feel free to contact us:</p>
         <ul>
             <li>Email: schoolpay@example.com</li>

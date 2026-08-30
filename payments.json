@@ -12,5 +12,20 @@
         "fee_id": "129123",
         "type": "paid",
         "timestamp": "2026-08-26 22:40:10"
+    },
+    {
+        "transaction_id": "81D767A6-652",
+        "id": "147471",
+        "user_id": "147471",
+        "username": "Test User",
+        "title": "Refund: Test",
+        "amount": 100.0,
+        "card_holder": "Test User",
+        "card_info": "Card Ending in 1112",
+        "status": "Refunded",
+        "fee_id": "129123",
+        "type": "refunded",
+        "announcement_id": "896262",
+        "timestamp": "2026-08-30 14:45:22"
     }
 ]
