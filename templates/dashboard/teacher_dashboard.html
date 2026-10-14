@@ -210,6 +210,7 @@
         <p style="text-align: center; margin-top: 20px;">&copy; 2026 SchoolPay. <a href="/about">Learn More</a> <a href="/contact">Contact Us</a></p>
     </footer>
     <script>
+        // Switch the active teacher dashboard tab.
         function switchTab(tabName) {
             document.querySelectorAll('.sidebar button').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active-tab-content'));
@@ -217,6 +218,7 @@
             document.getElementById(`${tabName}-content`).classList.add('active-tab-content');
         }
 
+        // Mark all notifications as read for the teacher.
         function markAllRead() {
             fetch('/mark_all_notifications_read', { method: 'POST' })
                 .then(response => response.json())
@@ -228,6 +230,7 @@
                 .catch(error => console.error('Error marking all read:', error));
         }
 
+        // Mark one notification as read for the teacher.
         function markNotificationRead(notificationId) {
             fetch(`/mark_notification_read/${encodeURIComponent(notificationId)}`, { method: 'POST' })
                 .then(response => response.json())
@@ -239,30 +242,29 @@
                 .catch(error => console.error('Error marking notification read:', error));
         }
 
-         fetch('/api/users')
-         
+        // Load all users from the API and render them in the overview list.
+        fetch('/api/users')
         .then(response => response.json())
-
         .then(usersData => {
             const list = document.getElementById('user-list');
             const userCountSpan = document.getElementById('user-count');
             let output = '';
 
             Object.values(usersData).forEach(user => {
-            const profileUrl = `/profile/${user.id}`;
+                const profileUrl = `/profile/${user.id}`;
                 output += `<li class="user-item"><a href="${profileUrl}">
                     <strong>Username:</strong> ${user.username}<br>
                     <strong>Email:</strong> ${user.email}<br>
                     <strong>User Type:</strong> ${user.user_type}</a></li>`;
-            });           
-            
-            userCountSpan.textContent = Object.keys(usersData).length;
+            });
 
+            // Update the visible count and list of users in the overview section.
+            userCountSpan.textContent = Object.keys(usersData).length;
             list.innerHTML = output;
         })
         .catch(error => console.error('Error:', error));
 
-        // Show/hide payment amount input
+        // Set the default tab on page load and show the payment amount field only when needed.
         document.addEventListener('DOMContentLoaded', () => {
             const hasFlashMessage = document.querySelector('.announcements-section .flash-messages');
             switchTab(hasFlashMessage ? 'announcements' : 'overview');
@@ -270,6 +272,7 @@
             const payAmountContainer = document.getElementById('pay-amount-container');
             if (paymentSelect) {
                 paymentSelect.addEventListener('change', function() {
+                    // Display the amount input only for paid announcements.
                     if (this.value === 'paid') {
                         payAmountContainer.style.display = 'inline-flex';
                     } else {
